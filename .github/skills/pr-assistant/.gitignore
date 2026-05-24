@@ -1,0 +1,6 @@
+# Temporary generated artifacts for PR drafting
+temp-files/*
+!temp-files/.gitkeep
+
+# Python bytecode cache
+__pycache__/

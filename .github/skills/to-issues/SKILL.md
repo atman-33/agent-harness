@@ -55,6 +55,13 @@ For each approved slice, publish a new issue to the issue tracker. Use the issue
 
 Publish issues in dependency order (blockers first) so you can reference real issue identifiers in the "Blocked by" field.
 
+After creating each issue, set GitHub issue relationships as well:
+
+- If the source was an existing parent issue, set it as the parent relationship
+- Set `blocked by` only for strict start-blocking dependencies
+- Do not model preferred sequencing as dependencies
+- Prefer GitHub issue relationships over relying on issue body text alone
+
 <issue-template>
 ## Parent
 
@@ -79,5 +86,7 @@ Avoid specific file paths or code snippets — they go stale fast. Exception: if
 Or "None - can start immediately" if no blockers.
 
 </issue-template>
+
+After publishing, report the created issues, the parent / blocked by relationships that were actually set, and any relationships that could not be set programmatically.
 
 Do NOT close or modify any parent issue.

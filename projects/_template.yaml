@@ -1,15 +1,24 @@
 id: example-project
 
-# Repository path relative to the agent-harness root.
-repo_root: ../example-project
+# Root path, relative to the agent-harness root, whose openspec/ directory stores
+# the change artifacts for this work unit.
+openspec_root: ../example-project
 
-# Optional files to read after opening the target repository.
-follow_files:
-  - ../example-project/AGENTS.md
+# Repository id to use when one repository must be chosen by default.
+primary_repo: app
 
-# Optional repository-specific validation commands.
-default_checks:
-  - echo "add validation commands here"
+# Repositories that participate in this work unit.
+repos:
+  - id: app
+    root: ../example-project
+
+    # Optional files to read after opening the repository.
+    follow_files:
+      - ../example-project/AGENTS.md
+
+    # Optional repository-specific validation commands.
+    default_checks:
+      - echo "add validation commands here"
 
 summary: |
   Short project description for the active development target.

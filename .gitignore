@@ -5,3 +5,5 @@
 config/agent-harness.yaml
 projects/*
 !projects/_template.yaml
+
+openspec/

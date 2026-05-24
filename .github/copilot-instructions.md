@@ -1,3 +1,0 @@
-- Respond in Japanese.
-- Write documents in English unless explicitly instructed otherwise.
-- Use Serena MCP before investigating or implementing code.

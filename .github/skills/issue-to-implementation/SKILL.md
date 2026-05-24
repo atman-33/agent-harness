@@ -1,6 +1,6 @@
 ---
 name: issue-to-implementation
-description: Orchestrates issue-driven development from a GitHub issue URL through feature-branch creation, spec generation, and TDD-based implementation by delegating to the existing workflow assets in the resolved repository. Use when the user provides a development issue URL and wants the branch, spec, and implementation flow started or continued end-to-end.
+description: Orchestrates issue-driven development from a GitHub issue URL through feature-branch creation, spec generation, TDD-based implementation, and repository-aware validation by delegating to the existing workflow assets in the resolved repository. Use when the user provides a development issue URL and wants the branch, spec, implementation, and follow-up validation flow started or continued end-to-end.
 argument-hint: "Provide the development issue URL, and optionally the target repository if the URL alone is not enough."
 ---
 
@@ -17,6 +17,7 @@ Drive development from a GitHub issue URL without copying the detailed instructi
 5. Create or continue the feature branch by following the `create-feature-branch` skill.
 6. Create or continue the spec artifacts by following the target repository's `.github/prompts/opsx-ff.prompt.md`.
 7. Implement the work by following the `tdd` skill.
+8. Run repository-aware validation, including the repository's code-check commands when they exist.
 
 ## Workflow
 
@@ -53,12 +54,19 @@ Drive development from a GitHub issue URL without copying the detailed instructi
 
 6. Validate and report.
    - Run the repository's focused checks for the touched slice before widening scope.
-   - Report the branch name, spec or change location, tests run, and any remaining blockers or open questions.
+   - Run repository-aware code checks from the resolved repository root after implementation.
+   - Use `repos[].default_checks` from the active project profile as the first source of truth for repository validation commands.
+   - If `default_checks` are absent or do not include the repository's lint/check/static-analysis commands, inspect the resolved repository's documented scripts and instructions and run the relevant code-check commands that the repository actually defines.
+   - Do not hardcode universal commands in this skill, and do not assume every repository uses `npm`.
+   - If no repository-defined code-check command can be resolved confidently, report that gap instead of guessing.
+   - Report the branch name, spec or change location, tests run, code checks run, and any remaining blockers or open questions.
 
 ## Guardrails
 
 - Do not duplicate or paraphrase the detailed instructions from `create-feature-branch`, `.github/prompts/opsx-ff.prompt.md`, or `tdd`; refer to them and execute them.
 - Do not create a branch, spec, or code change against the wrong repository just because the current editor focus is elsewhere.
 - Do not hand off to `create-feature-branch` without passing the resolved repository context.
+- Do not assume `repos[].default_checks` already cover lint/check commands when the resolved repository exposes additional repository-defined code checks.
+- Do not invent validation commands that are not defined by the resolved repository's profile, scripts, or documented instructions.
 - Do not treat the issue title alone as sufficient when the body or comments materially change scope.
 - If the issue URL points outside the active project or does not contain enough context to proceed, ask the user instead of guessing.

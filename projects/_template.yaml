@@ -1,0 +1,15 @@
+id: example-project
+
+# Repository path relative to the agent-harness root.
+repo_root: ../example-project
+
+# Optional files to read after opening the target repository.
+follow_files:
+  - ../example-project/AGENTS.md
+
+# Optional repository-specific validation commands.
+default_checks:
+  - echo "add validation commands here"
+
+summary: |
+  Short project description for the active development target.

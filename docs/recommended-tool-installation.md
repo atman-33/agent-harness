@@ -6,6 +6,7 @@ Recommended tools:
 
 - `zellij`: terminal multiplexer used by FF15-style multi-agent flows.
 - `rg`: fast recursive search used heavily by agents and shell workflows.
+- `Python`: runtime used by local automation helpers and general scripting.
 - `powershell-yaml`: PowerShell module for reading and writing YAML project profiles and config files.
 - `openspec`: spec-driven development CLI used in OpenSpec-based planning and implementation workflows.
 - `GitHub Copilot CLI`: terminal-first Copilot interface for repository and shell assistance.
@@ -24,6 +25,13 @@ winget install --id Zellij.Zellij -e
 
 ```powershell
 winget install --id BurntSushi.ripgrep.MSVC -e
+```
+
+### Install `Python`
+
+```powershell
+winget install 9NQ7512CXL7T -e --accept-package-agreements --disable-interactivity
+py install
 ```
 
 ### Install `powershell-yaml`
@@ -50,6 +58,7 @@ npm install -g @github/copilot
 ```powershell
 zellij --version
 rg --version
+py --version
 pwsh -NoLogo -Command "Import-Module powershell-yaml; 'hello: world' | ConvertFrom-Yaml | ConvertTo-Json -Compress"
 openspec --version
 copilot --help
@@ -73,6 +82,13 @@ sudo apt install -y zellij ripgrep
 ```
 
 If your distribution does not ship `zellij`, install it from the upstream release or from Cargo instead of the distro package.
+
+### Install `Python`
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-pip
+```
 
 ### Install PowerShell and `powershell-yaml`
 
@@ -105,6 +121,8 @@ npm install -g @github/copilot
 ```bash
 zellij --version
 rg --version
+python3 --version
+python3 -m pip --version
 pwsh -NoLogo -Command "Import-Module powershell-yaml; 'hello: world' | ConvertFrom-Yaml | ConvertTo-Json -Compress"
 openspec --version
 copilot --help
@@ -112,6 +130,8 @@ copilot --help
 
 ## Notes
 
+- The Windows examples install Python through the Python install manager, so `py` is the canonical launcher there.
+- Ubuntu-based WSL images often already include Python 3, but installing `python3-pip` ensures `pip` is available for local tooling.
 - `powershell-yaml` is installed per user in both environments. That keeps setup local and avoids admin-only module paths.
 - `openspec` currently installs through `npm`, so `node` and `npm` must already be available in the target environment.
 - `GitHub Copilot CLI` is shown in GitHub Docs with `npm` as the cross-platform install path; `winget`, Homebrew, and the install script remain valid platform-specific alternatives.

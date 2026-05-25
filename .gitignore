@@ -8,3 +8,5 @@ projects/*
 !projects/_template.yaml
 
 openspec/
+
+/skills/

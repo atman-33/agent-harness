@@ -2,6 +2,7 @@
 
 .tmp/
 .serena/
+runtime/
 config/agent-harness.yaml
 projects/*
 !projects/_template.yaml

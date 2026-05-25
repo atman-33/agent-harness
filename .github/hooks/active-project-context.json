@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "windows": "py -3 ./tools/inject-active-project-context.py",
+        "linux": "python3 ./tools/inject-active-project-context.py",
+        "osx": "python3 ./tools/inject-active-project-context.py",
+        "timeout": 10
+      }
+    ]
+  }
+}

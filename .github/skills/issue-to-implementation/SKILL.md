@@ -18,6 +18,7 @@ Drive development from a GitHub issue URL without copying the detailed instructi
 6. Create or continue the spec artifacts by following the target repository's `.github/prompts/opsx-ff.prompt.md`.
 7. Implement the work by following the `tdd` skill.
 8. Run repository-aware validation, including the repository's code-check commands when they exist.
+9. When the changed slice has a realistic manual verification path, return concise user-facing verification steps after implementation so the user can check behavior immediately.
 
 ## Workflow
 
@@ -59,7 +60,9 @@ Drive development from a GitHub issue URL without copying the detailed instructi
    - If `default_checks` are absent or do not include the repository's lint/check/static-analysis commands, inspect the resolved repository's documented scripts and instructions and run the relevant code-check commands that the repository actually defines.
    - Do not hardcode universal commands in this skill, and do not assume every repository uses `npm`.
    - If no repository-defined code-check command can be resolved confidently, report that gap instead of guessing.
-   - Report the branch name, spec or change location, tests run, code checks run, and any remaining blockers or open questions.
+   - When the changed slice can be checked manually in a realistic way, provide user-facing verification steps after implementation. Include prerequisites, exact commands or UI actions when needed, expected results, and any known caveats such as stale UI state or manual refresh requirements.
+   - If no realistic manual verification path is available, say so briefly instead of inventing one.
+   - Report the branch name, spec or change location, tests run, code checks run, any user-facing manual verification steps you provided, and any remaining blockers or open questions.
 
 ## Guardrails
 
@@ -68,5 +71,7 @@ Drive development from a GitHub issue URL without copying the detailed instructi
 - Do not hand off to `create-feature-branch` without passing the resolved repository context.
 - Do not assume `repos[].default_checks` already cover lint/check commands when the resolved repository exposes additional repository-defined code checks.
 - Do not invent validation commands that are not defined by the resolved repository's profile, scripts, or documented instructions.
+- Do not invent manual verification steps that are not grounded in the changed code, issue acceptance criteria, repository scripts, or observable runtime surfaces.
+- Do not dump generic smoke-test advice when the changed slice calls for targeted verification; keep user-facing verification steps specific to the implemented behavior.
 - Do not treat the issue title alone as sufficient when the body or comments materially change scope.
 - If the issue URL points outside the active project or does not contain enough context to proceed, ask the user instead of guessing.

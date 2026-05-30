@@ -15,7 +15,7 @@ Drive development from a GitHub issue URL without copying the detailed instructi
 3. Resolve the target repository and repository root from the issue URL and active project context.
 4. Switch into the matching repository root and keep that repository context for git and implementation work.
 5. Create or continue the feature branch by following the `create-feature-branch` skill.
-6. Create or continue the spec artifacts by following the target repository's `.github/prompts/opsx-ff.prompt.md`.
+6. Create or continue the spec artifacts by following the `openspec-ff-change` skill.
 7. Implement the work by following the `tdd` skill.
 8. Run repository-aware validation, including the repository's code-check commands when they exist.
 9. When the changed slice has a realistic manual verification path, return concise user-facing verification steps after implementation so the user can check behavior immediately.
@@ -41,12 +41,12 @@ Drive development from a GitHub issue URL without copying the detailed instructi
    - Do not invoke branch creation from the `agent-harness` repository root or any other unrelated repository.
 
 4. Create or continue the spec artifacts.
-   - Use the matching repository's `.github/prompts/opsx-ff.prompt.md`.
+   - Use the `openspec-ff-change` skill.
    - Feed it the issue context and a change name derived from the issue.
    - Keep repository-specific commands and file edits in the same resolved repository root unless the workflow explicitly needs `agent-harness` for coordination files.
-   - Follow the prompt as written; do not restate or rewrite its detailed instructions here.
+   - Follow that skill as written; do not restate or rewrite its detailed instructions here.
    - If a matching change already exists, continue it unless the user explicitly wants a fresh change.
-   - If the prompt needs a missing product decision, ask the user before inventing one.
+   - If the skill needs a missing product decision, ask the user before inventing one.
 
 5. Implement with TDD.
    - Use the resulting spec/tasks plus the issue acceptance criteria to pick the first vertical slice.
@@ -66,7 +66,7 @@ Drive development from a GitHub issue URL without copying the detailed instructi
 
 ## Guardrails
 
-- Do not duplicate or paraphrase the detailed instructions from `create-feature-branch`, `.github/prompts/opsx-ff.prompt.md`, or `tdd`; refer to them and execute them.
+- Do not duplicate or paraphrase the detailed instructions from `create-feature-branch`, `openspec-ff-change`, or `tdd`; refer to them and execute them.
 - Do not create a branch, spec, or code change against the wrong repository just because the current editor focus is elsewhere.
 - Do not hand off to `create-feature-branch` without passing the resolved repository context.
 - Do not assume `repos[].default_checks` already cover lint/check commands when the resolved repository exposes additional repository-defined code checks.

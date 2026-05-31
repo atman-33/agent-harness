@@ -8,13 +8,13 @@
 ## Active Project Context
 
 Treat the injected active project context as authoritative.
-Inspect `runtime/active-project-context.json` only when you need the resolved snapshot.
-Re-read `config/agent-harness.yaml` or `projects/<active_project>.yaml` only when the user asks or the injected context is insufficient, and then read only the minimum settings needed.
+Inspect `.agents/harness/runtime/active-project-context.json` only when you need the resolved snapshot.
+Re-read `.agents/harness/config/agent-harness.yaml` or the specific profiles listed in `active_projects` only when the user asks or the injected context is insufficient, and then read only the minimum settings needed.
 
 ## Working Rules
 
 - Prefer paths stored relative to the agent-harness root.
-- Use `openspec_root` for OpenSpec work.
+- Use the injected `<openspec path="..." />` value for OpenSpec work.
 - For code investigation, implementation, and validation, activate the Serena project for the resolved target repository, not `agent-harness`.
-- Activate `agent-harness` itself only when editing harness files such as `config/`, `projects/`, `.github/`, or repository-local skills and instructions.
+- Activate `agent-harness` itself only when editing harness files such as `.agents/harness/`, `.github/`, or repository-local skills and instructions.
 - Treat provider choice as repository-specific. Follow that target repository's local instructions instead of assuming GitHub Copilot CLI or any other provider.

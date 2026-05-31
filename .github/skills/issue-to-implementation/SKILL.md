@@ -56,7 +56,7 @@ Drive development from a GitHub issue URL without copying the detailed instructi
 6. Validate and report.
    - Run the repository's focused checks for the touched slice before widening scope.
    - Run repository-aware code checks from the resolved repository root after implementation.
-   - Use `repos[].default_checks` from the active project profile as the first source of truth for repository validation commands.
+   - Use `repos[].default_checks` from the resolved repo entry in the active context as the first source of truth for repository validation commands.
    - If `default_checks` are absent or do not include the repository's lint/check/static-analysis commands, inspect the resolved repository's documented scripts and instructions and run the relevant code-check commands that the repository actually defines.
    - Do not hardcode universal commands in this skill, and do not assume every repository uses `npm`.
    - If no repository-defined code-check command can be resolved confidently, report that gap instead of guessing.

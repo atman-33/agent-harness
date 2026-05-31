@@ -1,8 +1,0 @@
-version: 1
-
-# Set this to the project id that should be active for the current local session.
-# The agent should then load projects/<active_project>.yaml.
-active_project: example-project
-
-# Keep this file small. Put project-specific details in projects/<project-id>.yaml.
-projects_dir: projects

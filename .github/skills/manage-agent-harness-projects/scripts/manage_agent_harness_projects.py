@@ -13,8 +13,11 @@ import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-DEFAULT_CONFIG_PATH = REPO_ROOT / "config" / "agent-harness.yaml"
-ALLOWED_PROFILE_KEYS = {"id", "openspec_root", "primary_repo", "repos", "summary"}
+HARNESS_HOME = REPO_ROOT / ".agents" / "harness"
+DEFAULT_CONFIG_PATH = HARNESS_HOME / "config" / "agent-harness.yaml"
+DEFAULT_PROJECTS_DIR = HARNESS_HOME / "projects"
+SESSION_CONFIG_VERSION = 2
+ALLOWED_PROFILE_KEYS = {"id", "openspec_root", "repos", "summary"}
 ALLOWED_REPO_KEYS = {"id", "root", "follow_files", "default_checks"}
 
 
@@ -57,29 +60,12 @@ def load_yaml(path: Path) -> Any:
         fail(f"Failed to parse YAML at {path}: {exc}")
 
 
-def load_config(config_path: Path) -> dict[str, Any]:
-    data = load_yaml(config_path)
-    if not isinstance(data, dict):
-        fail(f"Config must be a mapping: {config_path}")
-    return data
-
-
 def config_path_from_arg(value: str) -> Path:
     return resolve_repo_path(value)
 
 
-def projects_dir_from_config(config_path: Path) -> Path:
-    config = load_config(config_path)
-    projects_dir = config.get("projects_dir")
-    if not isinstance(projects_dir, str) or not projects_dir.strip():
-        fail(f"projects_dir must be a non-empty string in {config_path}")
-    if not is_relative_path(projects_dir):
-        fail(f"projects_dir must be relative to the agent-harness root: {projects_dir}")
-    return resolve_repo_path(projects_dir)
-
-
-def profile_path_for_project(project_id: str, config_path: Path) -> Path:
-    return projects_dir_from_config(config_path) / f"{project_id}.yaml"
+def profile_path_for_project(project_id: str) -> Path:
+    return DEFAULT_PROJECTS_DIR / f"{project_id}.yaml"
 
 
 def normalize_string_list(value: Any, field_name: str) -> list[str]:
@@ -93,6 +79,73 @@ def normalize_string_list(value: Any, field_name: str) -> list[str]:
             raise ProfileError(f"{field_name}[{index}] must be a non-empty string")
         items.append(item.strip())
     return items
+
+
+def normalize_optional_summary(value: Any) -> str:
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise ProfileError("summary must be a string")
+    return value.rstrip()
+
+
+def normalize_project_ids(values: list[str]) -> list[str]:
+    project_ids: list[str] = []
+    seen_ids: set[str] = set()
+    for index, value in enumerate(values):
+        if not isinstance(value, str) or not value.strip():
+            raise ProfileError(f"project_id[{index}] must be a non-empty string")
+        project_id = value.strip()
+        if project_id in seen_ids:
+            raise ProfileError(f"project_id is duplicated: {project_id}")
+        seen_ids.add(project_id)
+        project_ids.append(project_id)
+    return project_ids
+
+
+def resolve_openspec_config(
+    active_projects: list[str],
+    openspec_mode: str | None,
+    openspec_project_id: str | None,
+) -> dict[str, str]:
+    mode = openspec_mode or "project"
+    if mode not in {"project", "harness"}:
+        raise ProfileError("openspec_mode must be 'project' or 'harness'")
+
+    if mode == "harness":
+        if openspec_project_id is not None:
+            raise ProfileError("openspec_project_id cannot be used when openspec_mode is 'harness'")
+        return {"mode": "harness"}
+
+    project_id = (openspec_project_id or active_projects[0]).strip()
+    if project_id not in active_projects:
+        raise ProfileError("openspec_project_id must match one active project")
+    return {"mode": "project", "project_id": project_id}
+
+
+def render_session_config(active_projects: list[str], openspec: dict[str, str]) -> str:
+    lines = [
+        f"version: {SESSION_CONFIG_VERSION}",
+        "",
+        "# Project ids to include in the active session context.",
+        "active_projects:",
+    ]
+    lines.extend(f"  - {render_scalar(project_id)}" for project_id in active_projects)
+    lines.extend(
+        [
+            "",
+            "# OpenSpec source to use for the current session.",
+            "# mode: project -> use the selected active project's openspec/ directory.",
+            "#   project_id is required and must be listed in active_projects.",
+            "# mode: harness -> use agent-harness/openspec.",
+            "#   omit project_id when using harness mode.",
+            "openspec:",
+            f"  mode: {render_scalar(openspec['mode'])}",
+        ]
+    )
+    if openspec["mode"] == "project":
+        lines.append(f"  project_id: {render_scalar(openspec['project_id'])}")
+    return "\n".join(lines) + "\n"
 
 
 def normalize_repo(repo: Any, field_name: str) -> dict[str, Any]:
@@ -127,7 +180,6 @@ def normalize_profile(profile: Any) -> dict[str, Any]:
 
     project_id = profile.get("id")
     openspec_root = profile.get("openspec_root")
-    primary_repo = profile.get("primary_repo")
     summary = profile.get("summary")
     repos_value = profile.get("repos")
 
@@ -135,10 +187,6 @@ def normalize_profile(profile: Any) -> dict[str, Any]:
         raise ProfileError("id must be a non-empty string")
     if not isinstance(openspec_root, str) or not openspec_root.strip():
         raise ProfileError("openspec_root must be a non-empty string")
-    if not isinstance(primary_repo, str) or not primary_repo.strip():
-        raise ProfileError("primary_repo must be a non-empty string")
-    if not isinstance(summary, str) or not summary.strip():
-        raise ProfileError("summary must be a non-empty string")
     if not isinstance(repos_value, list) or not repos_value:
         raise ProfileError("repos must be a non-empty list")
 
@@ -147,9 +195,8 @@ def normalize_profile(profile: Any) -> dict[str, Any]:
     return {
         "id": project_id.strip(),
         "openspec_root": openspec_root.strip(),
-        "primary_repo": primary_repo.strip(),
         "repos": repos,
-        "summary": summary.rstrip(),
+        "summary": normalize_optional_summary(summary),
     }
 
 
@@ -189,9 +236,6 @@ def validate_profile(profile: Any, allow_missing_paths: bool) -> tuple[dict[str,
             if not allow_missing_paths and not follow_path.exists():
                 warnings.append(f"follow_file not found: {follow_file}")
 
-    if normalized["primary_repo"] not in seen_repo_ids:
-        raise ProfileError("primary_repo must match one repo id in repos[]")
-
     return normalized, warnings
 
 
@@ -217,9 +261,6 @@ def render_profile(profile: dict[str, Any]) -> str:
         "# the change artifacts for this work unit.",
         f"openspec_root: {render_scalar(profile['openspec_root'])}",
         "",
-        "# Repository id to use when one repository must be chosen by default.",
-        f"primary_repo: {render_scalar(profile['primary_repo'])}",
-        "",
         "# Repositories that participate in this work unit.",
         "repos:",
     ]
@@ -243,9 +284,12 @@ def render_profile(profile: dict[str, Any]) -> str:
         lines.extend(render_list("default_checks", repo["default_checks"], "    "))
         lines.append("")
 
-    lines.extend(["summary: |"])
-    for summary_line in profile["summary"].splitlines():
-        lines.append(f"  {summary_line}")
+    if profile["summary"]:
+        lines.extend(["summary: |"])
+        for summary_line in profile["summary"].splitlines():
+            lines.append(f"  {summary_line}")
+    else:
+        lines.append('summary: ""')
     return "\n".join(lines) + "\n"
 
 
@@ -271,34 +315,40 @@ def print_result(payload: dict[str, Any]) -> None:
 
 def command_set_active(args: argparse.Namespace) -> None:
     config_path = config_path_from_arg(args.config_path)
-    profile_path = profile_path_for_project(args.project_id, config_path)
-    if not profile_path.exists():
-        fail(f"Project profile does not exist: {repo_relative_string(profile_path)}")
-
-    profile_data = load_yaml(profile_path)
     try:
-        profile, warnings = validate_profile(profile_data, args.allow_missing_paths)
+        active_projects = normalize_project_ids(args.project_id)
     except ProfileError as exc:
         fail(str(exc))
 
-    config_text = config_path.read_text(encoding="utf-8")
-    pattern = re.compile(r"^(active_project:\s*).*$", re.MULTILINE)
+    warnings: list[str] = []
+    profile_paths: list[str] = []
+    for project_id in active_projects:
+        profile_path = profile_path_for_project(project_id)
+        if not profile_path.exists():
+            fail(f"Project profile does not exist: {repo_relative_string(profile_path)}")
+        profile_paths.append(repo_relative_string(profile_path))
 
-    def replace(match: re.Match[str]) -> str:
-        return f"{match.group(1)}{args.project_id}"
+        profile_data = load_yaml(profile_path)
+        try:
+            _, profile_warnings = validate_profile(profile_data, args.allow_missing_paths)
+        except ProfileError as exc:
+            fail(str(exc))
+        warnings.extend(f"{project_id}: {warning}" for warning in profile_warnings)
 
-    updated_text, count = pattern.subn(replace, config_text, count=1)
-    if count != 1:
-        fail(f"Could not find active_project in {repo_relative_string(config_path)}")
+    try:
+        openspec = resolve_openspec_config(active_projects, args.openspec_mode, args.openspec_project_id)
+    except ProfileError as exc:
+        fail(str(exc))
 
-    config_path.write_text(updated_text, encoding="utf-8")
+    config_path.write_text(render_session_config(active_projects, openspec), encoding="utf-8")
     print_result(
         {
             "status": "ok",
             "command": "set-active",
-            "project_id": profile["id"],
+            "active_projects": active_projects,
+            "openspec": openspec,
             "config_path": repo_relative_string(config_path),
-            "profile_path": repo_relative_string(profile_path),
+            "profile_paths": profile_paths,
             "warnings": warnings,
         }
     )
@@ -306,7 +356,7 @@ def command_set_active(args: argparse.Namespace) -> None:
 
 def command_create_profile(args: argparse.Namespace) -> None:
     config_path = config_path_from_arg(args.config_path)
-    profile_path = profile_path_for_project(args.project_id, config_path)
+    profile_path = profile_path_for_project(args.project_id)
     if profile_path.exists() and not args.force:
         fail(f"Profile already exists: {repo_relative_string(profile_path)}")
 
@@ -315,7 +365,6 @@ def command_create_profile(args: argparse.Namespace) -> None:
             {
                 "id": args.project_id,
                 "openspec_root": args.openspec_root,
-                "primary_repo": args.primary_repo,
                 "repos": parse_repo_json(args.repo_json),
                 "summary": args.summary,
             },
@@ -338,7 +387,7 @@ def command_create_profile(args: argparse.Namespace) -> None:
 
 def command_update_profile(args: argparse.Namespace) -> None:
     config_path = config_path_from_arg(args.config_path)
-    profile_path = profile_path_for_project(args.project_id, config_path)
+    profile_path = profile_path_for_project(args.project_id)
     if not profile_path.exists():
         fail(f"Profile does not exist: {repo_relative_string(profile_path)}")
 
@@ -350,9 +399,6 @@ def command_update_profile(args: argparse.Namespace) -> None:
     changed = False
     if args.openspec_root is not None:
         profile["openspec_root"] = args.openspec_root
-        changed = True
-    if args.primary_repo is not None:
-        profile["primary_repo"] = args.primary_repo
         changed = True
     if args.summary is not None:
         profile["summary"] = args.summary
@@ -411,8 +457,7 @@ def command_update_profile(args: argparse.Namespace) -> None:
 
 def command_validate_profile(args: argparse.Namespace) -> None:
     if args.project_id:
-        config_path = config_path_from_arg(args.config_path)
-        profile_path = profile_path_for_project(args.project_id, config_path)
+        profile_path = profile_path_for_project(args.project_id)
     else:
         profile_path = resolve_repo_path(args.profile_path)
 
@@ -437,17 +482,24 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Manage agent-harness project configuration.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    set_active = subparsers.add_parser("set-active", help="Update active_project in config/agent-harness.yaml")
-    set_active.add_argument("--project-id", required=True)
+    set_active = subparsers.add_parser(
+        "set-active",
+        help="Update active_projects and openspec in .agents/harness/config/agent-harness.yaml",
+    )
+    set_active.add_argument("--project-id", action="append", required=True)
+    set_active.add_argument("--openspec-mode", choices=["project", "harness"])
+    set_active.add_argument("--openspec-project-id")
     set_active.add_argument("--config-path", default=repo_relative_string(DEFAULT_CONFIG_PATH))
     set_active.add_argument("--allow-missing-paths", action="store_true")
     set_active.set_defaults(func=command_set_active)
 
-    create_profile = subparsers.add_parser("create-profile", help="Create a profile under projects/")
+    create_profile = subparsers.add_parser(
+        "create-profile",
+        help="Create a profile under .agents/harness/projects/",
+    )
     create_profile.add_argument("--project-id", required=True)
     create_profile.add_argument("--openspec-root", required=True)
-    create_profile.add_argument("--primary-repo", required=True)
-    create_profile.add_argument("--summary", required=True)
+    create_profile.add_argument("--summary", default="")
     create_profile.add_argument("--repo-json", action="append", default=[], required=True)
     create_profile.add_argument("--config-path", default=repo_relative_string(DEFAULT_CONFIG_PATH))
     create_profile.add_argument("--force", action="store_true")
@@ -457,7 +509,6 @@ def build_parser() -> argparse.ArgumentParser:
     update_profile = subparsers.add_parser("update-profile", help="Update an existing profile")
     update_profile.add_argument("--project-id", required=True)
     update_profile.add_argument("--openspec-root")
-    update_profile.add_argument("--primary-repo")
     update_profile.add_argument("--summary")
     update_profile.add_argument("--repo-json", action="append", default=[])
     update_profile.add_argument("--remove-repo", action="append", default=[])

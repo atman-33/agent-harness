@@ -4,9 +4,6 @@ id: example-project
 # the change artifacts for this work unit.
 openspec_root: ../example-project
 
-# Repository id to use when one repository must be chosen by default.
-primary_repo: app
-
 # Repositories that participate in this work unit.
 repos:
   - id: app

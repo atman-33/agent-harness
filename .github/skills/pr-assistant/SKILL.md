@@ -10,15 +10,15 @@ Creates reviewer-friendly PR drafts for a repository selected from the active ag
 
 ## Quick start
 
-1. Read `config/agent-harness.yaml`, resolve `active_project`, and load `projects/<active_project>.yaml`.
-2. Pick the target repository from `repos[]`; default to `primary_repo` unless the user says otherwise.
+1. Read `.agents/harness/config/agent-harness.yaml`, resolve `active_projects`, and inspect the active project profiles relevant to the task.
+2. Pick the target repository using this order: the repo named by the user; otherwise the repo owning the current file if it is unambiguous; otherwise the only repo in the active context; otherwise ask.
 3. Run git and gh commands in the target repository root, not in the `agent-harness` repository root.
 4. Save generated analysis and PR body files only under `.github/skills/pr-assistant/temp-files/` in `agent-harness`.
 5. Draft first and ask for approval before creating or updating the PR, unless the user explicitly asked for immediate creation.
 
 ## Workflow
 
-1. Resolve the target repository path from the active project profile.
+1. Resolve the target repository path from the active context.
 2. Use `Push-Location` / `Pop-Location` or an equivalent directory stack when switching into the target repository.
 3. Run `scripts/analyze_changes.py` from the target repository to produce the analysis JSON.
 4. Choose the PR template from `assets/templates/` based on branch intent, then run `scripts/generate_pr_body.py`.

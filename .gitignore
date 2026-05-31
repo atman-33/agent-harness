@@ -2,10 +2,11 @@
 
 .tmp/
 .serena/
-runtime/
-config/agent-harness.yaml
-projects/*
-!projects/_template.yaml
+.agents/skills/
+.agents/harness/runtime/
+.agents/harness/config/agent-harness.yaml
+.agents/harness/projects/*
+!.agents/harness/projects/_template.yaml
 
 openspec/
 

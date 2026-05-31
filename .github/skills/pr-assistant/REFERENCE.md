@@ -10,17 +10,15 @@ This reference expands the `pr-assistant` workflow for `agent-harness`.
 
 ## Resolve the target repository
 
-1. Read `config/agent-harness.yaml`.
-2. Resolve `active_project`.
-3. Read `projects/<active_project>.yaml`.
-4. Choose the target repo from `repos[]`.
-5. Default to `primary_repo` when the user does not name a repo.
+1. Read `.agents/harness/config/agent-harness.yaml`.
+2. Resolve `active_projects`.
+3. Read the relevant profiles under `.agents/harness/projects/`.
+4. Choose the target repo using this order: the repo named by the user; otherwise the repo owning the current file if it is unambiguous; otherwise the only repo in the active context; otherwise ask.
 
 PowerShell example:
 
 ```powershell
 $HarnessRoot = "C:\repos\agent-harness"
-$ProjectProfile = Join-Path $HarnessRoot "projects\multi-agent-ff15-vscode.yaml"
 $TargetRepo = "C:\repos\multi-agent-ff15-vscode"
 ```
 

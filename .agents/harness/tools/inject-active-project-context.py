@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 from datetime import datetime, timezone
 import json
 import re
@@ -34,9 +35,7 @@ DEFAULT_CONFIG_PATH = HARNESS_HOME / "config" / "agent-harness.yaml"
 DEFAULT_PROJECTS_DIR = HARNESS_HOME / "projects"
 DEFAULT_RUNTIME_DIR = HARNESS_HOME / "runtime"
 DEFAULT_SNAPSHOT_PATH = DEFAULT_RUNTIME_DIR / "active-project-context.json"
-FOLLOW_FILES_INSTRUCTION = (
-    "Read these files before acting in this repo unless they are clearly irrelevant to the task."
-)
+FOLLOW_FILES_INSTRUCTION = "Read these files before acting in this repo unless they are clearly irrelevant to the task."
 
 
 class HookError(Exception):
@@ -48,7 +47,10 @@ def is_relative_path(value: str) -> bool:
         return False
     if value.startswith("~"):
         return False
-    return not PurePosixPath(value).is_absolute() and not PureWindowsPath(value).is_absolute()
+    return (
+        not PurePosixPath(value).is_absolute()
+        and not PureWindowsPath(value).is_absolute()
+    )
 
 
 def resolve_repo_path(value: str) -> Path:
@@ -104,7 +106,9 @@ def normalize_string_list(value: Any, field_name: str, source: Path) -> list[str
     items: list[str] = []
     for index, item in enumerate(value):
         if not isinstance(item, str) or not item.strip():
-            raise HookError(f"{field_name}[{index}] must be a non-empty string in {source}")
+            raise HookError(
+                f"{field_name}[{index}] must be a non-empty string in {source}"
+            )
         items.append(item.strip())
     return items
 
@@ -120,7 +124,9 @@ def require_unique_strings(value: Any, field_name: str, source: Path) -> list[st
     items = normalize_string_list(value, field_name, source)
     duplicates = sorted({item for item in items if items.count(item) > 1})
     if duplicates:
-        raise HookError(f"{field_name} contains duplicates in {source}: {', '.join(duplicates)}")
+        raise HookError(
+            f"{field_name} contains duplicates in {source}: {', '.join(duplicates)}"
+        )
     return items
 
 
@@ -141,19 +147,27 @@ def load_session_config(config_path: Path) -> dict[str, Any]:
     if version != 2:
         raise HookError(f"version must be 2 in {config_path}")
 
-    active_projects = require_unique_strings(config.get("active_projects"), "active_projects", config_path)
+    active_projects = require_unique_strings(
+        config.get("active_projects"), "active_projects", config_path
+    )
     openspec = require_mapping(config, "openspec", config_path)
     mode = require_string(openspec, "mode", config_path)
     if mode not in {"project", "harness"}:
-        raise HookError(f"openspec.mode must be 'project' or 'harness' in {config_path}")
+        raise HookError(
+            f"openspec.mode must be 'project' or 'harness' in {config_path}"
+        )
 
     project_id = None
     if mode == "project":
         project_id = require_string(openspec, "project_id", config_path)
         if project_id not in active_projects:
-            raise HookError(f"openspec.project_id must be listed in active_projects in {config_path}")
+            raise HookError(
+                f"openspec.project_id must be listed in active_projects in {config_path}"
+            )
     elif openspec.get("project_id") not in (None, ""):
-        raise HookError(f"openspec.project_id must be omitted when openspec.mode is 'harness' in {config_path}")
+        raise HookError(
+            f"openspec.project_id must be omitted when openspec.mode is 'harness' in {config_path}"
+        )
 
     return {
         "active_projects": active_projects,
@@ -189,14 +203,20 @@ def load_project_definition(project_id: str) -> dict[str, Any]:
     repo_ids: set[str] = set()
     for index, repo_value in enumerate(repos_value):
         if not isinstance(repo_value, dict):
-            raise HookError(f"repos[{index}] must be a mapping in {project_profile_path}")
+            raise HookError(
+                f"repos[{index}] must be a mapping in {project_profile_path}"
+            )
 
         repo_id = require_string(repo_value, "id", project_profile_path)
         repo_root = require_string(repo_value, "root", project_profile_path)
         if not is_relative_path(repo_root):
-            raise HookError(f"repos[{index}].root must be relative in {project_profile_path}")
+            raise HookError(
+                f"repos[{index}].root must be relative in {project_profile_path}"
+            )
         if repo_id in repo_ids:
-            raise HookError(f"repos[{index}].id is duplicated in {project_profile_path}: {repo_id}")
+            raise HookError(
+                f"repos[{index}].id is duplicated in {project_profile_path}: {repo_id}"
+            )
 
         repo_ids.add(repo_id)
         repos.append(
@@ -204,14 +224,14 @@ def load_project_definition(project_id: str) -> dict[str, Any]:
                 "id": repo_id,
                 "qualified_id": f"{project_id}/{repo_id}",
                 "root": repo_root,
-                "root_absolute": str(resolve_repo_path(repo_root)).replace('\\', '/'),
+                "root_absolute": str(resolve_repo_path(repo_root)).replace("\\", "/"),
                 "follow_files": normalize_string_list(
                     repo_value.get("follow_files"),
                     f"repos[{index}].follow_files",
                     project_profile_path,
                 ),
                 "follow_files_absolute": [
-                    str(resolve_repo_path(path)).replace('\\', '/')
+                    str(resolve_repo_path(path)).replace("\\", "/")
                     for path in normalize_string_list(
                         repo_value.get("follow_files"),
                         f"repos[{index}].follow_files",
@@ -229,10 +249,16 @@ def load_project_definition(project_id: str) -> dict[str, Any]:
     return {
         "id": project_id,
         "project_profile_path": repo_relative_string(project_profile_path),
-        "project_profile_path_absolute": str(project_profile_path.resolve()).replace('\\', '/'),
+        "project_profile_path_absolute": str(project_profile_path.resolve()).replace(
+            "\\", "/"
+        ),
         "openspec_root": openspec_root,
-        "openspec_root_absolute": str(resolve_repo_path(openspec_root)).replace('\\', '/'),
-        "openspec_path_absolute": str((resolve_repo_path(openspec_root) / "openspec").resolve()).replace('\\', '/'),
+        "openspec_root_absolute": str(resolve_repo_path(openspec_root)).replace(
+            "\\", "/"
+        ),
+        "openspec_path_absolute": str(
+            (resolve_repo_path(openspec_root) / "openspec").resolve()
+        ).replace("\\", "/"),
         "summary": summary,
         "repos": repos,
     }
@@ -240,21 +266,28 @@ def load_project_definition(project_id: str) -> dict[str, Any]:
 
 def load_active_context(config_path: Path) -> dict[str, Any]:
     session_config = load_session_config(config_path)
-    projects = [load_project_definition(project_id) for project_id in session_config["active_projects"]]
+    projects = [
+        load_project_definition(project_id)
+        for project_id in session_config["active_projects"]
+    ]
     projects_by_id = {project["id"]: project for project in projects}
 
     openspec_mode = session_config["openspec"]["mode"]
     if openspec_mode == "harness":
         openspec_path = (REPO_ROOT / "openspec").resolve()
     else:
-        openspec_path = Path(projects_by_id[session_config["openspec"]["project_id"]]["openspec_path_absolute"])
+        openspec_path = Path(
+            projects_by_id[session_config["openspec"]["project_id"]][
+                "openspec_path_absolute"
+            ]
+        )
 
     return {
-        "agent_harness_root": str(REPO_ROOT.resolve()).replace('\\', '/'),
+        "agent_harness_root": str(REPO_ROOT.resolve()).replace("\\", "/"),
         "active_projects": projects,
         "openspec": {
             "mode": openspec_mode,
-            "path": str(openspec_path).replace('\\', '/'),
+            "path": str(openspec_path).replace("\\", "/"),
         },
     }
 
@@ -274,11 +307,13 @@ def write_runtime_snapshot(output_path: Path, snapshot: dict[str, Any]) -> None:
             encoding="utf-8",
         )
     except OSError as exc:
-        raise HookError(f"Failed to write runtime snapshot at {output_path}: {exc}") from exc
+        raise HookError(
+            f"Failed to write runtime snapshot at {output_path}: {exc}"
+        ) from exc
 
 
 def xml_attribute(value: str) -> str:
-    return escape(value, {'"': '&quot;'})
+    return escape(value, {'"': "&quot;"})
 
 
 def xml_text(value: str) -> str:
@@ -309,7 +344,9 @@ def build_system_message(snapshot: dict[str, Any], snapshot_path: Path) -> str:
                     f'          <follow-files instruction="{xml_attribute(FOLLOW_FILES_INSTRUCTION)}">'
                 )
                 for follow_file in repo["follow_files_absolute"]:
-                    lines.append(f'            <file path="{xml_attribute(follow_file)}" />')
+                    lines.append(
+                        f'            <file path="{xml_attribute(follow_file)}" />'
+                    )
                 lines.append("          </follow-files>")
             if repo["default_checks"]:
                 lines.append("          <default-checks>")
@@ -341,15 +378,39 @@ def hook_response(system_message: str | None = None) -> str:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Inject active project context into agent system prompt."
+    )
+    parser.add_argument(
+        "--output-system-message",
+        action="store_true",
+        help=(
+            "Output only the system message XML text (no JSON wrapper, no stdin read). "
+            "Useful for OpenCode plugin integration."
+        ),
+    )
+    args = parser.parse_args()
+
     try:
-        read_hook_input()
+        if not args.output_system_message:
+            read_hook_input()
         snapshot = load_active_context(DEFAULT_CONFIG_PATH)
         write_runtime_snapshot(DEFAULT_SNAPSHOT_PATH, snapshot)
     except HookError as exc:
-        sys.stdout.write(hook_response(f"agent-harness SessionStart hook failed: {exc}"))
+        if args.output_system_message:
+            print(f"agent-harness context injection failed: {exc}", file=sys.stderr)
+            return 1
+        sys.stdout.write(
+            hook_response(f"agent-harness SessionStart hook failed: {exc}")
+        )
         return 0
 
-    sys.stdout.write(hook_response(build_system_message(snapshot, DEFAULT_SNAPSHOT_PATH)))
+    if args.output_system_message:
+        print(build_system_message(snapshot, DEFAULT_SNAPSHOT_PATH))
+    else:
+        sys.stdout.write(
+            hook_response(build_system_message(snapshot, DEFAULT_SNAPSHOT_PATH))
+        )
     return 0
 
 

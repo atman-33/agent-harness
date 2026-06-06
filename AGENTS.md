@@ -18,3 +18,4 @@ Re-read `.agents/harness/config/agent-harness.yaml` or the specific profiles lis
 - For code investigation, implementation, and validation, activate the Serena project for the resolved target repository, not `agent-harness`.
 - Activate `agent-harness` itself only when editing harness files such as `.agents/harness/`, `.github/`, or repository-local skills and instructions.
 - Treat provider choice as repository-specific. Follow that target repository's local instructions instead of assuming GitHub Copilot CLI or any other provider.
+- Do not run git commit, git push, git reset, git rebase, or other history-changing or remote-affecting git commands unless the user explicitly instructs you to do so.

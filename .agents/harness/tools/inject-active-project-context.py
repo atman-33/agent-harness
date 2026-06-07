@@ -160,7 +160,7 @@ def load_session_config(config_path: Path) -> dict[str, Any]:
     project_id = None
     if mode == "project":
         project_id = require_string(openspec, "project_id", config_path)
-        if project_id not in active_projects:
+        if active_projects and project_id not in active_projects:
             raise HookError(
                 f"openspec.project_id must be listed in active_projects in {config_path}"
             )
@@ -370,6 +370,26 @@ def build_system_message(snapshot: dict[str, Any], snapshot_path: Path) -> str:
     return "\n".join(lines)
 
 
+def build_error_system_message(error_message: str, config_path: Path) -> str:
+    lines: list[str] = ["<tooling-context>"]
+    lines.append(
+        f'  <agent-harness root-path="{xml_attribute(str(REPO_ROOT.resolve()).replace(chr(92), "/"))}" />'
+    )
+    lines.append("  <error>")
+    lines.append(f"    <message>{xml_text(error_message)}</message>")
+    lines.append(
+        f'    <instruction>Please fix `{xml_text(repo_relative_string(config_path))}`.</instruction>'
+    )
+    lines.append("  </error>")
+    lines.append("  <instructions>")
+    lines.append(
+        "    <instruction>agent-harness configuration has an error. Please review and fix the configuration file.</instruction>"
+    )
+    lines.append("  </instructions>")
+    lines.append("</tooling-context>")
+    return "\n".join(lines)
+
+
 def hook_response(system_message: str | None = None) -> str:
     payload: dict[str, Any] = {"continue": True}
     if system_message:
@@ -398,8 +418,9 @@ def main() -> int:
         write_runtime_snapshot(DEFAULT_SNAPSHOT_PATH, snapshot)
     except HookError as exc:
         if args.output_system_message:
-            print(f"agent-harness context injection failed: {exc}", file=sys.stderr)
-            return 1
+            # Output the error details as a system message so the agent can prompt the user to fix it.
+            print(build_error_system_message(str(exc), DEFAULT_CONFIG_PATH))
+            return 0
         sys.stdout.write(
             hook_response(f"agent-harness SessionStart hook failed: {exc}")
         )

@@ -17,18 +17,37 @@ const agentHarnessPlugin: Plugin = async (ctx, _options) => {
     "/.agents/harness/tools/inject-active-project-context.py";
 
   let systemMessage: string | null = null;
+  let pythonCmd: string | null = null;
+
+  // Find an available Python interpreter (python3, python, or py on Windows)
+  const candidates = ["python3", "python", "py"];
+  for (const cmd of candidates) {
+    try {
+      await ctx.$`${cmd} --version`.quiet();
+      pythonCmd = cmd;
+      break;
+    } catch {
+      continue;
+    }
+  }
 
   // Build the context once at plugin initialization time.
-  try {
-    const result =
-      await ctx.$`python3 ${scriptPath} --output-system-message`.quiet();
-    systemMessage = result.text().trim();
-  } catch (err) {
+  if (pythonCmd) {
+    try {
+      const result =
+        await ctx.$`${pythonCmd} ${scriptPath} --output-system-message`.quiet();
+      systemMessage = result.text().trim();
+    } catch (err) {
+      console.error(
+        "[agent-harness] Failed to inject active project context:",
+        err instanceof Error ? err.message : String(err),
+      );
+      // Continue without context injection rather than breaking the session.
+    }
+  } else {
     console.error(
-      "[agent-harness] Failed to inject active project context:",
-      err instanceof Error ? err.message : String(err),
+      "[agent-harness] No Python interpreter found (tried python3, python, py). Skipping context injection.",
     );
-    // Continue without context injection rather than breaking the session.
   }
 
   return {

@@ -2,7 +2,6 @@
   "recommendations": [
     "whcater.copy-selection-path",
     "github.vscode-pull-request-github",
-    "mhutchie.git-graph",
-    "kwickramasekara.opencode-chat-unofficial"
+    "mhutchie.git-graph"
   ]
 }

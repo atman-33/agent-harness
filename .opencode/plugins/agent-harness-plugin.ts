@@ -3,14 +3,10 @@ import type { Plugin } from "@opencode-ai/plugin";
 /**
  * agent-harness OpenCode Plugin
  *
- * Injects active project context (from agent-harness.yaml) into the
- * system prompt of every OpenCode session, equivalent to the GitHub
- * Copilot SessionStart hook in .github/hooks/active-project-context.json.
- *
- * Additionally, the first user message of every session is prefixed with a
- * small XML summary of the loaded context so the user can see what context
- * was injected. This is intentionally emitted as a non-synthetic text part so
- * it appears in the TUI chat area.
+ * Injects active project context (from agent-harness.yaml) into the first
+ * user message of every OpenCode session as a visible, non-synthetic part.
+ * The full <tooling-context> XML is shown in the TUI chat area and is also
+ * received by the LLM as part of the human turn.
  */
 const agentHarnessPlugin: Plugin = async (ctx, _options) => {
   const workspaceRoot = ctx.directory;
@@ -55,27 +51,17 @@ const agentHarnessPlugin: Plugin = async (ctx, _options) => {
     );
   }
 
-  // Track sessions that have already received the visible context message so
-  // it is only shown once per session. OpenCode fires `chat.message` for every
-  // user message, so we need this guard to satisfy the "session start only"
+  // Track sessions that have already received the context message so it is
+  // only shown once per session. OpenCode fires `chat.message` for every user
+  // message, so we need this guard to satisfy the "session start only"
   // requirement without adding a new core hook.
   const contextInjectedSessions = new Set<string>();
 
   return {
     /**
-     * Append the agent-harness context XML to the system prompt
-     * whenever the system prompt is assembled for an LLM call.
-     */
-    "experimental.chat.system.transform": async (_input, output) => {
-      if (systemMessage && systemMessage.length > 0) {
-        output.system.push(systemMessage);
-      }
-    },
-
-    /**
-     * Prefix the very first user message of a session with a compact XML
-     * summary of the injected context. The part is non-synthetic so it is
-     * rendered in the TUI chat area.
+     * Prefix the very first user message of a session with the full
+     * <tooling-context> XML. The part is non-synthetic so it is rendered in
+     * the TUI chat area and delivered to the LLM as part of the human turn.
      */
     "chat.message": async (input, output) => {
       if (contextInjectedSessions.has(input.sessionID)) {
@@ -83,14 +69,13 @@ const agentHarnessPlugin: Plugin = async (ctx, _options) => {
       }
       contextInjectedSessions.add(input.sessionID);
 
-      const contextXml = buildChatContextXml(systemMessage);
-      if (contextXml) {
+      if (systemMessage && systemMessage.length > 0) {
         output.parts.unshift({
           id: makeEarlyPartId(),
           sessionID: output.message.sessionID,
           messageID: output.message.id,
           type: "text",
-          text: contextXml,
+          text: systemMessage,
           synthetic: false,
         });
       }
@@ -114,75 +99,6 @@ function makeEarlyPartId(): string {
     chars[Math.floor(Math.random() * chars.length)],
   ).join("");
   return `prt_000000000000${suffix}`;
-}
-
-/**
- * Build a compact XML document summarising the injected agent-harness context.
- *
- * The input is the full `<tooling-context>` XML that is sent to the LLM as a
- * system message. We extract the active projects, repositories, and OpenSpec
- * path so the user sees a concise, clearly-labelled XML block in the chat.
- */
-function buildChatContextXml(systemMessage: string | null): string | null {
-  if (!systemMessage || !systemMessage.includes("<tooling-context>")) {
-    return null;
-  }
-
-  const openspecMatch = systemMessage.match(/<openspec path="([^"]+)" \/>/);
-  const openspecPath = openspecMatch ? openspecMatch[1] : null;
-
-  const projects: string[] = [];
-  const projectRegex = /<project id="([^"]+)"[^>]*>([\s\S]*?)<\/project>/g;
-  let projectMatch: RegExpExecArray | null;
-
-  while ((projectMatch = projectRegex.exec(systemMessage))) {
-    const projectId = projectMatch[1];
-    const projectBlock = projectMatch[2];
-
-    const summaryMatch = projectBlock.match(/<summary>([\s\S]*?)<\/summary>/);
-    const summaryAttr = summaryMatch
-      ? ` summary="${summaryMatch[1].trim()}"`
-      : "";
-
-    const repos: string[] = [];
-    const repoRegex =
-      /<repo id="[^"]+" qualified-id="([^"]+)" root-path="([^"]+)"[^>]*>/g;
-    let repoMatch: RegExpExecArray | null;
-
-    while ((repoMatch = repoRegex.exec(projectBlock))) {
-      repos.push(
-        `      <repo qualified-id="${repoMatch[1]}" root-path="${repoMatch[2]}" />`,
-      );
-    }
-
-    if (repos.length === 0) {
-      projects.push(`    <project id="${projectId}"${summaryAttr} />`);
-    } else {
-      projects.push(
-        `    <project id="${projectId}"${summaryAttr}>\n${repos.join("\n")}\n    </project>`,
-      );
-    }
-  }
-
-  if (projects.length === 0 && !openspecPath) {
-    return null;
-  }
-
-  const lines = ["<agent-harness-context>"];
-
-  if (projects.length > 0) {
-    lines.push("  <active-projects>");
-    lines.push(...projects);
-    lines.push("  </active-projects>");
-  }
-
-  if (openspecPath) {
-    lines.push(`  <openspec path="${openspecPath}" />`);
-  }
-
-  lines.push("</agent-harness-context>");
-
-  return lines.join("\n");
 }
 
 export default agentHarnessPlugin;

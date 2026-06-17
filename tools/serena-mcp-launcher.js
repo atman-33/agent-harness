@@ -9,7 +9,7 @@ if (isWin) {
     [
       '--native-tls',
       '--python',
-      '3.12',
+      '3.11',
       '--from',
       'git+https://github.com/oraios/serena',
       'serena',

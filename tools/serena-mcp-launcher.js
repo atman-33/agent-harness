@@ -7,6 +7,7 @@ if (isWin) {
   child = spawn(
     'uvx',
     [
+      '--native-tls',
       '--from',
       'git+https://github.com/oraios/serena',
       'serena',

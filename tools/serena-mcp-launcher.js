@@ -8,6 +8,8 @@ if (isWin) {
     'uvx',
     [
       '--native-tls',
+      '--python',
+      '3.12',
       '--from',
       'git+https://github.com/oraios/serena',
       'serena',

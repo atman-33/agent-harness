@@ -2,15 +2,15 @@
   "mcpServers": {
     "memory": {
       "command": "cmd",
-      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-memory"]
+      "args": ["/c", "mcp-server-memory"]
     },
     "serena": {
-      "command": "node",
-      "args": ["tools/serena-mcp-launcher.js"]
+      "command": "cmd",
+      "args": ["/c", "node", "tools/serena-mcp-launcher.js"]
     },
     "context7": {
-      "command": "cmd",
-      "args": ["/c", "npx", "-y", "@upstash/context7-mcp"]
+      "command": "node",
+      "args": ["tools/context7-mcp-launcher.js"]
     }
   }
 }

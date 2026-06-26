@@ -1,0 +1,36 @@
+{
+  "roleBasedDelegation": true,
+  "openspecPath": "C:/repos/agent-harness/openspec",
+  "projects": [
+    {
+      "name": "agent-harness",
+      "path": "C:/repos/agent-harness",
+      "summary": "AI agent coordination harness for development repositories"
+    },
+    {
+      "name": "multi-agent-ff15",
+      "path": "C:/repos/multi-agent-ff15",
+      "summary": "OpenCode Multi-Agent Web Dashboard — browser-based UI to manage and monitor AI agent teams (TypeScript, React Router 7, React 19)"
+    },
+    {
+      "name": "multi-agent-ff15-vscode",
+      "path": "C:/repos/multi-agent-ff15-vscode",
+      "summary": "VS Code extension that hosts the multi-agent-ff15 webview surfaces inside the IDE (TypeScript, Vite, React)"
+    },
+    {
+      "name": "opencode-chat",
+      "path": "C:/repos/opencode-chat",
+      "summary": "Custom VS Code extension integrating the OpenCode chat webview into the IDE sidebar with clipboard support, persistent sessions, and remote workspace routing"
+    },
+    {
+      "name": "srms",
+      "path": "C:/repos/srms",
+      "summary": "Japanese classroom reservation and lesson management system with role-based access, shift/salary management, Slack/LINE/email notifications, and Agora online classroom integration (FastAPI, Vue 3, PostgreSQL)"
+    },
+    {
+      "name": "my-notes",
+      "path": "C:/obsidian/my-notes",
+      "summary": "Obsidian personal notes vault"
+    }
+  ]
+}

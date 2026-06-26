@@ -1,17 +1,4 @@
 {
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "py -3 .agents/harness/tools/claude-code-session-start.py"
-          }
-        ]
-      }
-    ]
-  },
   "enabledPlugins": {
     "engineering@atman-marketplace": true
   }

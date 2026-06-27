@@ -2,7 +2,7 @@ import type { Plugin } from "@opencode-ai/plugin";
 // `readFileSync` is the only Node API used here; importing it directly keeps the
 // plugin self-contained without pulling in a wider @types/node dependency.
 // @ts-ignore - node:fs types are not installed in this workspace.
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 
 /**
  * project-context OpenCode Plugin
@@ -25,7 +25,7 @@ const projectContextPlugin: Plugin = async (ctx, _options) => {
     workspaceRoot.replace(/\/+$/, "") + "/.claude/project-context.json";
 
   // Build the <project-context> block once at plugin initialization time.
-  const projectContext = buildProjectContext(configPath);
+  const projectContext = buildProjectContext(configPath, workspaceRoot);
 
   // Track sessions that have already received the context message so it is
   // only shown once per session. OpenCode fires `chat.message` for every user
@@ -66,7 +66,10 @@ const projectContextPlugin: Plugin = async (ctx, _options) => {
  * absent config — matching the failure-tolerant behaviour of the Claude Code
  * SessionStart hook.
  */
-function buildProjectContext(configPath: string): string | null {
+function buildProjectContext(
+  configPath: string,
+  workspaceRoot: string,
+): string | null {
   let raw: string;
   try {
     raw = readFileSync(configPath, "utf8");
@@ -86,8 +89,8 @@ function buildProjectContext(configPath: string): string | null {
     return null;
   }
 
-  const hasOpenspec =
-    typeof config.openspecPath === "string" && config.openspecPath.trim() !== "";
+  const resolvedOpenspec = resolveOpenspecPath(config, workspaceRoot);
+  const hasOpenspec = resolvedOpenspec !== "";
   const hasProjects =
     Array.isArray(config.projects) &&
     config.projects.some(
@@ -99,7 +102,27 @@ function buildProjectContext(configPath: string): string | null {
     return null;
   }
 
-  return buildXml(config);
+  return buildXml(config, resolvedOpenspec);
+}
+
+/**
+ * Resolve the openspec docs folder to inject. Mirrors the Claude Code hook:
+ *   1. `config.openspecPath` when set and the folder exists on disk.
+ *   2. Otherwise `<workspaceRoot>/openspec` (the working directory's openspec).
+ * Returns "" when neither exists, so the <openspec> line is simply omitted.
+ */
+function resolveOpenspecPath(
+  config: ProjectContextConfig,
+  workspaceRoot: string,
+): string {
+  const candidate =
+    typeof config.openspecPath === "string" ? config.openspecPath.trim() : "";
+  if (candidate && existsSync(candidate)) {
+    return candidate;
+  }
+  const fallback =
+    workspaceRoot.replace(/\\/g, "/").replace(/\/+$/, "") + "/openspec";
+  return existsSync(fallback) ? fallback : "";
 }
 
 interface ProjectEntry {
@@ -123,11 +146,11 @@ function xmlEscape(value: string): string {
 }
 
 /** Build the <project-context> XML block from the parsed config. */
-function buildXml(config: ProjectContextConfig): string {
+function buildXml(config: ProjectContextConfig, openspecPath: string): string {
   const lines = ["<project-context>"];
 
-  if (typeof config.openspecPath === "string" && config.openspecPath.trim()) {
-    lines.push(`  <openspec path="${xmlEscape(config.openspecPath.trim())}" />`);
+  if (openspecPath) {
+    lines.push(`  <openspec path="${xmlEscape(openspecPath)}" />`);
   }
 
   const projects = Array.isArray(config.projects) ? config.projects : [];

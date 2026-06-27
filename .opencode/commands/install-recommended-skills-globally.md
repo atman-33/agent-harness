@@ -1,5 +1,5 @@
 ---
-name: install-recommended-skills
+name: install-recommended-skills-globally
 description: Install recommended productivity skills (grill-me, handoff, writing-great-skills) globally via gh skill install.
 ---
 

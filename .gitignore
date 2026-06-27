@@ -1,17 +1,14 @@
+# IDE and editor files
 *.code-workspace
 
+# Temporary directories
 .tmp/
-.serena/
-.agents/skills/
-.agents/harness/runtime/
-.agents/harness/config/agent-harness.yaml
-.agents/harness/projects/*
-!.agents/harness/projects/_template.yaml
-
-openspec/
-
-/skills/
-
 .scratch/
 
+# Development tools
+.serena/
 .ff15/
+
+# Local configuration
+openspec/
+.claude/project-context.json

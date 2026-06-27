@@ -13,46 +13,19 @@
     ]
   },
   "mcp": {
-    "memory": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ],
-      "enabled": true
-    },
-    "playwright": {
-      "type": "local",
-      "command": [
-        "npx",
-        "@playwright/mcp@latest"
-      ],
-      "enabled": false
-    },
-    "drawio": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@drawio/mcp"
-      ],
-      "enabled": false
-    },
     "serena": {
       "type": "local",
       "command": [
         "node",
-        "tools/serena-mcp-launcher.js"
+        ".opencode/mcp/serena-mcp-launcher.mjs"
       ],
       "enabled": true
     },
     "context7": {
       "type": "local",
       "command": [
-        "npx",
-        "-y",
-        "@upstash/context7-mcp"
+        "node",
+        ".opencode/mcp/context7-mcp-launcher.mjs"
       ],
       "enabled": true
     }

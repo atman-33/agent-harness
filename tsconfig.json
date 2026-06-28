@@ -10,7 +10,8 @@
       "@opencode-ai/plugin": ["./.opencode/node_modules/@opencode-ai/plugin/dist/index.d.ts"],
       "@opencode-ai/sdk": ["./.opencode/node_modules/@opencode-ai/sdk/dist/index.d.ts"]
     },
-    "typeRoots": ["node_modules/@types"]
+    "typeRoots": ["node_modules/@types"],
+    "types": ["node"]
   },
   "include": [".opencode/plugins/**/*.ts"]
 }

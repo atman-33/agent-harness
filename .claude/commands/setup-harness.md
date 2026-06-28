@@ -1,5 +1,5 @@
 ---
-description: First-time agent-harness setup — checks prerequisites, installs the atman-marketplace plugins (engineering/productivity), enables Serena & Context7 MCP, runs engineering /setup-all, and verifies the session.
+description: First-time agent-harness setup — checks prerequisites, installs the atman-marketplace plugins (engineering/productivity), enables Serena & Context7 MCP, runs engineering /setup-all, runs productivity plugin setup (/install-recommended-skills, /setup-zellij-autostart), and verifies the session.
 argument-hint: ""
 allowed-tools: Bash Read Write Edit SlashCommand
 ---
@@ -131,7 +131,32 @@ and scaffold `.claude/project-context.json`.
 
 ---
 
-## Phase 6 — Register sibling repositories (manual)
+## Phase 6 — Productivity plugin setup (auto)
+
+Run the two productivity sub-commands in order **only if the productivity plugin was
+installed in Phase 3** (check `.claude/settings.json` for
+`enabledPlugins["productivity@atman-marketplace"] === true`).
+
+### 6-A — Install recommended skills (auto)
+
+Invoke `/install-recommended-skills` via the SlashCommand tool. This installs
+`grill-me`, `handoff`, and `writing-great-skills` at user scope via `gh skill install`.
+
+- Requires `gh` to be authenticated. If `gh auth status` fails (already checked in
+  Phase 1), skip 6-A and remind the user to run `gh auth login` first.
+- If the productivity plugin is not yet installed, skip and instruct the user to run
+  `/setup-harness` again after completing Phase 3.
+
+### 6-B — Zellij autostart (auto)
+
+Invoke `/setup-zellij-autostart` via the SlashCommand tool. It configures
+PowerShell 7, Windows PowerShell, WSL bash, and WSL zsh profiles to auto-launch
+Zellij on startup (idempotent — skips profiles that are already configured or where
+Zellij is not installed).
+
+---
+
+## Phase 7 — Register sibling repositories (manual)
 
 Open `.claude/project-context.json`.
 
@@ -145,7 +170,7 @@ start**.
 
 ---
 
-## Phase 7 — Verify (manual)
+## Phase 8 — Verify (manual)
 
 Ask the user to run `/mcp` inside the session and confirm:
 
@@ -174,8 +199,10 @@ End every run with:
    | 3 — Marketplace + plugins | ⏭ | manual — list commands |
    | 4 — Enable MCP | ✓ / ✗ | created / merged / unchanged |
    | 5 — /setup-all | ✓ / ⏭ | ran / pending plugin install |
-   | 6 — Register projects | ✓ / ⏭ | edited / already configured |
-   | 7 — Verify | ⏭ | manual — run /mcp |
+   | 6-A — Install skills | ✓ / ✗ / ⏭ | installed / gh auth needed / plugin pending |
+   | 6-B — Zellij autostart | ✓ / ⏭ | configured / zellij not installed |
+   | 7 — Register projects | ✓ / ⏭ | edited / already configured |
+   | 8 — Verify | ⏭ | manual — run /mcp |
 
 2. **Next steps** — the exact commands the user still has to run by hand (plugin install,
    `gh auth login`, `/mcp`, editing `project-context.json`).

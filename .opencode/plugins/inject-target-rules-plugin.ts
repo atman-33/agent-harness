@@ -34,13 +34,13 @@ const injectTargetRulesPlugin: Plugin = async (ctx, _options) => {
   const sessionState = new Map<string, SessionState>();
 
   return {
-    "tool.execute.before": async (input) => {
+    "tool.execute.before": async (input, output) => {
       if (!isFileMutationTool(input.tool) || !projectConfig) {
         return;
       }
 
       const state = getSessionState(sessionState, input.sessionID);
-      const touchedPaths = collectTouchedPaths(input.args);
+      const touchedPaths = collectTouchedPaths(output.args);
       for (const touchedPath of touchedPaths) {
         const target = findSiblingTargetProject(
           touchedPath,

@@ -1,8 +1,6 @@
 // Shared helpers for the OpenCode plugins that mirror the Claude Code
 // engineering hook scripts.
-// @ts-ignore - node:fs types are not installed in this workspace.
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-// @ts-ignore - node:child_process types are not installed in this workspace.
 import { spawnSync } from "node:child_process";
 
 const FORMAT_COMMAND_TIMEOUT_MS = 120000;

@@ -25,6 +25,7 @@ A general-purpose AI agent harness. Always started from this directory; actual d
 - When you Read/Edit/Write a file in a target repository, its instruction file (`CLAUDE.md`, or `AGENTS.md`) is auto-injected in full once per session as a `<target-project-instructions>` block, along with any matching `.claude/rules`. Follow that injected guidance while working in that repo.
 - Call `serena initial_instructions` before investigating or implementing code in any target repository.
 - Commit messages use Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `style:`, `refactor:`).
+- After editing `.opencode/plugins/**/*.ts` or `.opencode/**/*.mjs`, run `npm run check` and confirm it passes before finishing.
 
 <important>
 This repo contains no application code. Never create application source files here. All implementation work belongs in the target sibling repository.

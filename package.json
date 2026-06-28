@@ -1,0 +1,13 @@
+{
+  "name": "agent-harness",
+  "private": true,
+  "scripts": {
+    "check:ts": "node node_modules/typescript/bin/tsc --noEmit",
+    "check:mjs": "node scripts/check-mjs.mjs",
+    "check": "npm run check:ts && npm run check:mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "typescript": "^5.0.0"
+  }
+}

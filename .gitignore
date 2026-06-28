@@ -12,3 +12,6 @@
 # Local configuration
 openspec/
 .claude/project-context.json
+
+# Node.js
+node_modules/

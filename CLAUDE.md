@@ -20,6 +20,7 @@ A general-purpose AI agent harness. Always started from this directory; actual d
 # Rules
 
 - Respond to the user in Japanese.
+- Write plan files (created during plan mode) in Japanese.
 - Write all documents and repository artifacts in English unless the user explicitly requests otherwise.
 - Call `serena initial_instructions` before investigating or implementing code in any target repository.
 - Commit messages use Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `style:`, `refactor:`).

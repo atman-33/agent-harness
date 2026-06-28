@@ -25,6 +25,11 @@ export interface RuleFile {
   path: string;
 }
 
+// Per-session de-dup state. Callers key this by OpenCode sessionID. Sub-agents
+// run in distinct child sessions (Session.parentID), so keying by sessionID
+// already isolates each agent context — no agent-level keying is needed here
+// (unlike the Claude Code inject-target-rules.mjs mirror; see that plugin and
+// inject-target-rules-plugin.ts for the rationale).
 export interface SessionState {
   loadedInstructionTargets: Set<string>;
   loadedRules: Set<string>;

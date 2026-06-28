@@ -19,6 +19,18 @@ const injectTargetRulesPlugin: Plugin = async (ctx, _options) => {
   const workspaceRoot = normalizePath(ctx.directory);
   const configPath = workspaceRoot + "/.claude/project-context.json";
   const projectConfig = loadProjectContextConfig(configPath);
+  // De-dup is keyed by sessionID. This is safe per agent context because OpenCode
+  // runs each sub-agent (task tool) in its own CHILD session with a distinct
+  // sessionID (see Session.parentID in @opencode-ai/sdk), so this Map isolates
+  // the main session from each sub-agent automatically.
+  //
+  // NOTE: this differs from the Claude Code mirror
+  // (atman-marketplace engineering plugin's inject-target-rules.mjs), where a
+  // sub-agent shares the parent's session_id AND transcript_path. There, the hook
+  // runs as a fresh process and de-dups via a shared filesystem sentinel, so it
+  // must additionally key on agent_id to avoid a sub-agent's injection suppressing
+  // the main session's. OpenCode needs no such agent keying — and could not do it
+  // anyway, since tool.execute.before exposes no agent identifier.
   const sessionState = new Map<string, SessionState>();
 
   return {

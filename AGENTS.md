@@ -1,6 +1,3 @@
-# agent-harness
-
-- Respond in Japanese.
-- Write documents and repository artifacts in English unless the user explicitly asks for another language.
-- Use Serena MCP before investigating or implementing code.
-- This repository is a harness for AI agents that coordinate work across sibling development repositories.
+<important>
+All instructions and rules for this repository are defined in CLAUDE.md. You MUST read and follow CLAUDE.md before taking any action.
+</important>

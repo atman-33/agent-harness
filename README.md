@@ -22,6 +22,11 @@ It ships a named multi-agent team (Noctis, Ignis, Gladiolus, Prompto) that can r
 
 ## Getting Started
 
+> [!TIP]
+> The quickest path is to start Claude Code from this directory and run **`/setup-harness`**.
+> It automates steps 1–4 below (prerequisite checks, plugin install, MCP enablement, and
+> OpenSpec setup) and walks you through the few interactive steps. See [docs/setup.md](docs/setup.md).
+
 ### Prerequisites
 
 | Tool | Version | Purpose |
@@ -78,7 +83,7 @@ Create `.claude/settings.local.json` at the repository root:
 claude
 ```
 
-Inside the session, run `/mcp`. All three servers should show connected:
+Inside the session, run `/mcp`. Both servers should show connected:
 
 ```
 serena    ✓ connected
@@ -161,7 +166,7 @@ Agent definitions live in `.github/agents/`. Noctis is the primary contact; the 
 
 Python 3.12 for Windows has a known OpenSSL bug. The MCP launcher pins `--python 3.11` to work around it. If you see `-32000` errors after updating uv:
 
-1. Open `.opencode/mcp/serena-mcp-launcher.mjs` (or `tools/serena-mcp-launcher.js` if using Claude Code).
+1. Open the Serena launcher: `.opencode/mcp/serena-mcp-launcher.mjs` for OpenCode, or the engineering plugin's launcher at `~/.claude/plugins/cache/atman-marketplace/engineering/<version>/mcp/serena-mcp-launcher.mjs` for Claude Code.
 2. Confirm the `--python` argument reads `'3.11'`, not `'3.12'` or later.
 3. Run `/mcp` in Claude Code to reconnect.
 

@@ -15,7 +15,7 @@ A general-purpose AI agent harness. Always started from this directory; actual d
 - Start Claude Code from this directory (`claude`), then work on sibling repos via the active project profile.
 - To switch the target project, edit `.ff15/config/config.yaml` (`active_projects`, `openspec.project_id`).
 - To add a new target project, copy `.ff15/projects/_template.yaml` and fill in `id`, `openspec_root`, and `repos[].root`.
-- Run `/mcp` after startup to confirm `memory`, `serena`, and `context7` are connected.
+- Run `/mcp` after startup to confirm `serena` and `context7` are connected.
 
 # Rules
 
@@ -29,5 +29,5 @@ A general-purpose AI agent harness. Always started from this directory; actual d
 
 <important>
 This repo contains no application code. Never create application source files here. All implementation work belongs in the target sibling repository.
-The serena MCP launcher pins Python 3.11. If serena fails with an OpenSSL error, check `tools/serena-mcp-launcher.js` and ensure `--python 3.11` is set (not 3.12+).
+The serena MCP launcher pins Python 3.11. If serena fails with an OpenSSL error, check the launcher (`.opencode/mcp/serena-mcp-launcher.mjs` for OpenCode, or the engineering plugin's `mcp/serena-mcp-launcher.mjs` for Claude Code) and ensure `--python 3.11` is set (not 3.12+).
 </important>

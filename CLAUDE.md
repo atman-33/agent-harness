@@ -22,6 +22,7 @@ A general-purpose AI agent harness. Always started from this directory; actual d
 - Respond to the user in Japanese.
 - Write plan files (created during plan mode) in Japanese.
 - Write all documents and repository artifacts in English unless the user explicitly requests otherwise.
+- Before working in a target repository, read its instruction file — the `instructions` attribute on that repo's `<project>` entry in `<registered-projects>` (its `CLAUDE.md`, or `AGENTS.md` if there is no `CLAUDE.md`) — and follow it. Skip when no `instructions` attribute is present.
 - Call `serena initial_instructions` before investigating or implementing code in any target repository.
 - Commit messages use Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `style:`, `refactor:`).
 

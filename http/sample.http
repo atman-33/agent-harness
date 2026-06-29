@@ -1,0 +1,189 @@
+# =============================================================================
+# REST Client sample — reference for authoring new .http files
+#
+# Prerequisites:
+#   - VS Code extension: "REST Client" (humao.rest-client)
+#   - Set variables in _env.http or in the VS Code settings environment block
+#
+# Usage:
+#   Click "Send Request" above any ### block, or press Ctrl+Alt+R
+# =============================================================================
+
+# Import shared variables defined in _env.http
+# (REST Client picks up all @variable lines in every open .http file in the
+#  workspace, so _env.http values are available here automatically.)
+
+# ---------------------------------------------------------------------------
+# File-local variable overrides
+# ---------------------------------------------------------------------------
+@resource_id = 42
+@page        = 1
+@per_page    = 20
+
+
+###############################################################################
+# 1. Simple GET — no auth
+###############################################################################
+
+### GET public JSON placeholder
+GET https://jsonplaceholder.typicode.com/posts/{{resource_id}}
+Accept: {{content_type}}
+
+
+###############################################################################
+# 2. GET with query parameters
+###############################################################################
+
+### List posts with pagination
+GET https://jsonplaceholder.typicode.com/posts?_page={{page}}&_limit={{per_page}}
+Accept: {{content_type}}
+
+
+###############################################################################
+# 3. POST with JSON body
+###############################################################################
+
+### Create a new post
+POST https://jsonplaceholder.typicode.com/posts
+Content-Type: {{content_type}}
+
+{
+  "title": "Hello from REST Client",
+  "body": "This is a sample request body.",
+  "userId": 1
+}
+
+
+###############################################################################
+# 4. PUT — full update
+###############################################################################
+
+### Replace post
+PUT https://jsonplaceholder.typicode.com/posts/{{resource_id}}
+Content-Type: {{content_type}}
+
+{
+  "id": {{resource_id}},
+  "title": "Updated title",
+  "body": "Updated body.",
+  "userId": 1
+}
+
+
+###############################################################################
+# 5. PATCH — partial update
+###############################################################################
+
+### Patch post title only
+PATCH https://jsonplaceholder.typicode.com/posts/{{resource_id}}
+Content-Type: {{content_type}}
+
+{
+  "title": "Patched title"
+}
+
+
+###############################################################################
+# 6. DELETE
+###############################################################################
+
+### Delete a post
+DELETE https://jsonplaceholder.typicode.com/posts/{{resource_id}}
+
+
+###############################################################################
+# 7. Bearer token auth (uses @bearer_token from _env.http)
+###############################################################################
+
+### Authenticated GET (placeholder — replace URL with a real auth-protected endpoint)
+GET {{base_url}}/api/me
+Authorization: Bearer {{bearer_token}}
+Accept: {{content_type}}
+
+
+###############################################################################
+# 8. API-key header auth
+###############################################################################
+
+### API key in header
+GET {{base_url}}/api/items
+X-Api-Key: {{api_key}}
+Accept: {{content_type}}
+
+
+###############################################################################
+# 9. Response variable chaining
+#    Capture a value from one response and reuse it in the next request.
+###############################################################################
+
+### Step 1 — create a post and capture its id
+# @name createPost
+POST https://jsonplaceholder.typicode.com/posts
+Content-Type: {{content_type}}
+
+{
+  "title": "Chained request demo",
+  "body": "Step 1 creates this resource.",
+  "userId": 1
+}
+
+### Step 2 — use the captured id from Step 1
+# The syntax is {{<requestName>.response.body.<jsonPath>}}
+GET https://jsonplaceholder.typicode.com/posts/{{createPost.response.body.id}}
+Accept: {{content_type}}
+
+
+###############################################################################
+# 10. Multipart form-data
+###############################################################################
+
+### Upload a file (change the file path to a real file on your machine)
+POST https://httpbin.org/post
+Content-Type: multipart/form-data; boundary=----Boundary
+
+------Boundary
+Content-Disposition: form-data; name="description"
+
+Sample upload
+------Boundary
+Content-Disposition: form-data; name="file"; filename="sample.txt"
+Content-Type: text/plain
+
+< C:\repos\agent-harness\README.md
+------Boundary--
+
+
+###############################################################################
+# 11. Basic auth (base64-encoded credentials)
+###############################################################################
+
+### Basic auth via Authorization header
+GET https://httpbin.org/basic-auth/user/pass
+Authorization: Basic dXNlcjpwYXNz
+
+
+###############################################################################
+# 12. Custom request with multiple headers
+###############################################################################
+
+### Rich headers example
+GET https://httpbin.org/headers
+Accept: application/json
+X-Correlation-Id: req-{{$guid}}
+X-Timestamp: {{$datetime iso8601}}
+User-Agent: VSCode-RestClient/1.0
+Cache-Control: no-cache
+
+
+###############################################################################
+# Built-in dynamic variables (no setup needed)
+#   {{$guid}}              — random UUID v4
+#   {{$timestamp}}         — current Unix timestamp (seconds)
+#   {{$datetime iso8601}}  — current datetime in ISO 8601
+#   {{$datetime rfc1123}}  — current datetime in RFC 1123
+#   {{$randomInt min max}} — random integer in [min, max]
+###############################################################################
+
+### Echo dynamic variables
+GET https://httpbin.org/get?guid={{$guid}}&ts={{$timestamp}}&rand={{$randomInt 1 100}}
+Accept: {{content_type}}

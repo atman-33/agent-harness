@@ -73,6 +73,33 @@ they stay out of normal sessions. Grow this file as the harness evolves.
   `.claude/project-context.json` file. Per-project command lists override the
   top-level default in both Claude Code and OpenCode.
 
+## Extended rules: the second injection path (`.claude/rules-ex`)
+- There are TWO rule-injection paths, both PreToolUse (Read/Edit/Write):
+  1. `inject-target-rules` — loads a **target repo's own** `CLAUDE.md` +
+     `.claude/rules` when a file under that registered sibling repo is touched.
+     Rules live WITH the repo they govern. Depends on `project-context.json`.
+  2. `inject-extended-rules` (engineering plugin v0.11.0+) — loads
+     **workspace-local** rules from `<cwd>/.claude/rules-ex/*.md` and applies them
+     to files in ANY repo via **cwd-relative globs**. `rules-ex` = the *extended*
+     form of `.claude/rules`. Lets cross-cutting dev rules stay centralised in the
+     harness (cwd) without modifying sibling target repos. Does NOT read
+     `project-context.json` — only cwd + the rules-ex folder.
+- Matching (path #2): the touched file is converted to a cwd-relative path
+  (`path.relative`, preserving `..`) and matched against each rule's `paths:` with
+  a strict, **root-anchored** glob (NO implicit leading double-star prefix, unlike
+  `inject-target-rules`'s `matchesGlob`). `paths:` is REQUIRED — a rule with no
+  `paths:` is skipped (a cross-cutting rule must declare scope). Example front
+  matter: `paths: ["../atman-marketplace/plugins/**/*.mjs"]`. Output is wrapped in
+  `<extended-rules>`; de-dup sentinel prefix is `claude-extended-rules-`.
+- Both paths are registered as separate commands under one PreToolUse matcher in
+  the engineering plugin's `hooks.json`; Claude Code concatenates their
+  `additionalContext`. The OpenCode mirror is
+  `.opencode/plugins/inject-extended-rules-plugin.ts` with helpers
+  (`toCwdRelativePath`, `loadExtendedRules`) in `lib/project-context-core.ts`;
+  de-dup uses `SessionState.loadedExtendedRules` keyed by sessionID.
+- Live engineering hook runs from the plugin cache; deploy via version bump +
+  `claude plugin update` (same as inject-target-rules).
+
 ## `.ff15/` is a separate concern
 - `.ff15/` (config, projects, operations) belongs to the **FF15 VS Code
   extension**, not to context injection. It is NOT the source of the

@@ -2,6 +2,7 @@
 // engineering hook scripts.
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { relative } from "node:path";
 
 const FORMAT_COMMAND_TIMEOUT_MS = 120000;
 
@@ -31,6 +32,7 @@ export interface RuleFile {
 export interface SessionState {
   loadedInstructionTargets: Set<string>;
   loadedRules: Set<string>;
+  loadedExtendedRules: Set<string>;
   pendingBlocks: string[];
 }
 
@@ -49,6 +51,7 @@ export function createSessionState(): SessionState {
   return {
     loadedInstructionTargets: new Set<string>(),
     loadedRules: new Set<string>(),
+    loadedExtendedRules: new Set<string>(),
     pendingBlocks: [],
   };
 }
@@ -310,6 +313,68 @@ export function loadMatchingRules(root: string, relativePath: string): RuleFile[
   }
 
   return matches;
+}
+
+// cwd-relative path of a touched file, preserving `..` for files outside the
+// workspace tree. Mirrors inject-extended-rules.mjs: both `filePath` and `cwd`
+// are expected to be absolute (OpenCode passes absolute file paths).
+export function toCwdRelativePath(filePath: string, cwd: string): string {
+  return normalizePath(relative(normalizePath(cwd), normalizePath(filePath)));
+}
+
+// Workspace-local "extended rules" under `<workspaceRoot>/.claude/rules-ex`.
+// Complement to loadMatchingRules (target repo's own `.claude/rules`): these
+// cross-cutting rules live in the workspace and target other repos via cwd-relative
+// globs. A rule MUST declare `paths:` (no paths -> skipped), and matching is strict
+// and root-anchored — no implicit leading double-star prefix (unlike matchesGlob).
+export function loadExtendedRules(
+  workspaceRoot: string,
+  relativePath: string,
+): RuleFile[] {
+  const rulesRoot = `${normalizePath(workspaceRoot)}/.claude/rules-ex`;
+  let entries: string[];
+  try {
+    entries = readdirSync(rulesRoot);
+  } catch {
+    return [];
+  }
+
+  const matches: RuleFile[] = [];
+  for (const entry of entries) {
+    if (!entry.toLowerCase().endsWith(".md")) {
+      continue;
+    }
+
+    const rulePath = `${rulesRoot}/${entry}`;
+    const raw = safeReadText(rulePath);
+    if (!raw) {
+      continue;
+    }
+
+    const parsed = parsePathsFrontMatter(raw);
+    if (!parsed.hasFrontMatter || parsed.paths.length === 0) {
+      continue;
+    }
+    if (!parsed.paths.some((pattern) => matchesExtendedGlob(relativePath, pattern))) {
+      continue;
+    }
+
+    matches.push({
+      path: rulePath,
+      body: stripFrontMatter(raw),
+    });
+  }
+
+  return matches;
+}
+
+function matchesExtendedGlob(relativePath: string, pattern: string): boolean {
+  const clean = normalizePath(pattern.trim());
+  try {
+    return globToRegExp(clean).test(relativePath);
+  } catch {
+    return false;
+  }
 }
 
 export function resolveFormatCommands(

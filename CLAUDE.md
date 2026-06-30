@@ -26,6 +26,7 @@ A general-purpose AI agent harness. Always started from this directory; actual d
 - Call `serena initial_instructions` before investigating or implementing code in any target repository.
 - Commit messages use Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `style:`, `refactor:`).
 - After editing `.opencode/plugins/**/*.ts` or `.opencode/**/*.mjs`, run `npm run check` and confirm it passes before finishing.
+- To enable auto-formatting after edits for a registered project, add `"postToolFormatCommands": ["<cmd>"]` to that project's entry in `.claude/project-context.json`. The engineering plugin's `PostToolUse` hook runs these commands automatically. **Never** put target-project formatting hooks in the harness `.claude/settings.json`.
 - When investigation or implementation yields reusable knowledge that is non-obvious from code, git history, or existing instruction files (gotchas, build quirks, design invariants, naming conventions, the "why" behind a decision), propose capturing it **at the moment of discovery** — do not defer. Route it to the right home:
   - **Target repo's `.claude/rules/<slug>.md`** — repo-specific technical knowledge; scope with `paths:` so it auto-injects when relevant files are touched. Committed and shared with the team.
   - **Harness `.claude/rules-ex/`** — cross-cutting knowledge that must reach target-repo files but lives in this workspace (cwd-relative `../<repo>/**` globs; `paths:` required, strict match).

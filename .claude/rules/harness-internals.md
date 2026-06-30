@@ -100,6 +100,36 @@ they stay out of normal sessions. Grow this file as the harness evolves.
 - Live engineering hook runs from the plugin cache; deploy via version bump +
   `claude plugin update` (same as inject-target-rules).
 
+## Per-project auto-formatting (`postToolFormatCommands`)
+
+The engineering plugin's `PostToolUse` hook (`post-format-project.mjs`) reads
+`.claude/project-context.json` after every `Edit`/`Write` and runs format commands
+for any registered sibling project whose file was touched.
+
+**Where to configure:**
+- `projects[].postToolFormatCommands` — per-project list (takes priority over top-level)
+- Top-level `postToolFormatCommands` — fallback for all projects that have no per-project list
+
+```jsonc
+// .claude/project-context.json
+{
+  "projects": [
+    {
+      "name": "my-project",
+      "path": "/home/atman/repos/my-project",
+      "postToolFormatCommands": ["npm run fix"]   // ← runs in project root
+    }
+  ]
+}
+```
+
+**Rules:**
+- Commands run via `shell: true` in the project root; they must be non-interactive.
+- Failures are reported as `systemMessage` only — the hook always exits 0 (never blocks).
+- **Never** put target-project formatting hooks in the harness `settings.json`. That
+  file is for harness-level config (plugins, MCP) only. Per-project formatting belongs
+  here in `project-context.json`.
+
 ## `.ff15/` is a separate concern
 - `.ff15/` (config, projects, operations) belongs to the **FF15 VS Code
   extension**, not to context injection. It is NOT the source of the

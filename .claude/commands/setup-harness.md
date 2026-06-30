@@ -75,19 +75,20 @@ Only run it after confirming; everything else is manual.
 
 ## Phase 3 — Marketplace + plugins (manual)
 
-The MCP servers (Serena, Context7), the role-based sub-agents, and the workflow skills
-are all provided by the **engineering** plugin from `atman-marketplace`. `claude plugin`
-commands need a session reload to take effect, so present them for the user to run at the
-shell (do not run them via Bash):
+Three steps are required in order. `claude plugin` commands need a session reload to take
+effect, so present all of them for the user to run at the shell (do not run them via Bash):
+
+1. **Add the marketplace** — registers `atman-33/atman-marketplace` as a plugin source so
+   `claude plugin install` can resolve packages from it.
+2. **Install the engineering plugin** (project scope) → Serena + Context7 MCP, agent team,
+   and skills.
+3. **Install the productivity plugin** (user scope) → cross-project productivity commands.
 
 ```bash
 claude plugin marketplace add atman-33/atman-marketplace
 claude plugin install engineering@atman-marketplace --scope project
 claude plugin install productivity@atman-marketplace --scope user
 ```
-
-- `engineering` (project scope) → Serena + Context7 MCP, agent team, and skills.
-- `productivity` (user scope) → cross-project productivity commands.
 
 Tell the user to restart / reload the session after installing so the plugins load.
 

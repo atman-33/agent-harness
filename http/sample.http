@@ -3,22 +3,25 @@
 #
 # Prerequisites:
 #   - VS Code extension: "REST Client" (humao.rest-client)
-#   - Set variables in _env.http or in the VS Code settings environment block
+#   - Create http/.env (copy from http/.env.example) with your real values
 #
 # Usage:
 #   Click "Send Request" above any ### block, or press Ctrl+Alt+R
 # =============================================================================
 
-# Import shared variables defined in _env.http
-# (REST Client picks up all @variable lines in every open .http file in the
-#  workspace, so _env.http values are available here automatically.)
+# Shared values come from http/.env via the {{$dotenv VAR}} system variable.
+# REST Client reads the .env located in the SAME directory as this .http file,
+# so every .http file under http/ shares the same values — no copy step needed.
+# (NOTE: plain @file variables are file-scoped and are NOT shared across files;
+#  use {{$dotenv VAR}} for anything that must be shared.)
 
 # ---------------------------------------------------------------------------
-# File-local variable overrides
+# File-local variables (constant within this file)
 # ---------------------------------------------------------------------------
-@resource_id = 42
-@page        = 1
-@per_page    = 20
+@content_type = application/json
+@resource_id  = 42
+@page         = 1
+@per_page     = 20
 
 
 ###############################################################################
@@ -92,12 +95,12 @@ DELETE https://jsonplaceholder.typicode.com/posts/{{resource_id}}
 
 
 ###############################################################################
-# 7. Bearer token auth (uses @bearer_token from _env.http)
+# 7. Bearer token auth (uses BEARER_TOKEN from http/.env)
 ###############################################################################
 
 ### Authenticated GET (placeholder — replace URL with a real auth-protected endpoint)
-GET {{base_url}}/api/me
-Authorization: Bearer {{bearer_token}}
+GET {{$dotenv BASE_URL}}/api/me
+Authorization: Bearer {{$dotenv BEARER_TOKEN}}
 Accept: {{content_type}}
 
 
@@ -106,8 +109,8 @@ Accept: {{content_type}}
 ###############################################################################
 
 ### API key in header
-GET {{base_url}}/api/items
-X-Api-Key: {{api_key}}
+GET {{$dotenv BASE_URL}}/api/items
+X-Api-Key: {{$dotenv API_KEY}}
 Accept: {{content_type}}
 
 
@@ -137,7 +140,7 @@ Accept: {{content_type}}
 # 10. Multipart form-data
 ###############################################################################
 
-### Upload a file (change the file path to a real file on your machine)
+### Upload a file (data files live in http/data/, referenced by relative path)
 POST https://httpbin.org/post
 Content-Type: multipart/form-data; boundary=----Boundary
 
@@ -146,10 +149,10 @@ Content-Disposition: form-data; name="description"
 
 Sample upload
 ------Boundary
-Content-Disposition: form-data; name="file"; filename="sample.txt"
-Content-Type: text/plain
+Content-Disposition: form-data; name="file"; filename="sample.csv"
+Content-Type: text/csv
 
-< C:\repos\agent-harness\README.md
+< ./data/sample.csv
 ------Boundary--
 
 
@@ -173,6 +176,39 @@ X-Correlation-Id: req-{{$guid}}
 X-Timestamp: {{$datetime iso8601}}
 User-Agent: VSCode-RestClient/1.0
 Cache-Control: no-cache
+
+
+###############################################################################
+# 13. Send a data file as the raw request body (CSV, etc.)
+#     Data files live in http/data/ and are referenced by a path RELATIVE to
+#     this .http file. REST Client streams the file contents as the body.
+#       < ./path   — send the file as-is (no variable substitution)
+#       <@ ./path  — substitute {{variables}} inside the file before sending
+#                    (e.g. <@ ./data/template.csv); add an encoding like
+#                    <@latin1 ./data/legacy.csv if the file is not UTF-8.
+###############################################################################
+
+### Upload a CSV file as the body
+POST https://httpbin.org/post
+Content-Type: text/csv
+
+< ./data/sample.csv
+
+
+###############################################################################
+# 14. Send a data file inside multipart/form-data
+###############################################################################
+
+### Upload sample.csv as a named file part
+POST https://httpbin.org/post
+Content-Type: multipart/form-data; boundary=----Boundary
+
+------Boundary
+Content-Disposition: form-data; name="dataset"; filename="sample.csv"
+Content-Type: text/csv
+
+< ./data/sample.csv
+------Boundary--
 
 
 ###############################################################################

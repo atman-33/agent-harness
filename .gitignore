@@ -13,8 +13,8 @@
 openspec/
 .claude/project-context.json
 
-# HTTP client environment files (contain secrets — copy from _env.example.http)
-http/_env.http
+# HTTP client environment file (contains secrets — copy from .env.example)
+http/.env
 
 # Node.js
 node_modules/

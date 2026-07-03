@@ -1,5 +1,5 @@
 ---
-description: First-time agent-harness setup — checks prerequisites, installs the atman-marketplace plugins (engineering/productivity), enables Serena & Context7 MCP, runs engineering /setup-all, runs productivity plugin setup (/install-recommended-skills, /setup-zellij-autostart), and verifies the session.
+description: First-time agent-harness setup — checks prerequisites, installs the atman-marketplace plugins (engineering/productivity), enables Serena & Context7 MCP, runs engineering /setup-all, runs productivity plugin setup (/install-recommended-skills, /setup-herdr), and verifies the session.
 argument-hint: ""
 allowed-tools: Bash Read Write Edit SlashCommand
 ---
@@ -148,12 +148,14 @@ Invoke `/install-recommended-skills` via the SlashCommand tool. This installs
 - If the productivity plugin is not yet installed, skip and instruct the user to run
   `/setup-harness` again after completing Phase 3.
 
-### 6-B — Zellij autostart (auto)
+### 6-B — herdr autostart (auto)
 
-Invoke `/setup-zellij-autostart` via the SlashCommand tool. It configures
-PowerShell 7, Windows PowerShell, WSL bash, and WSL zsh profiles to auto-launch
-Zellij on startup (idempotent — skips profiles that are already configured or where
-Zellij is not installed).
+Invoke `/setup-herdr` via the SlashCommand tool. It installs `herdr`, wires up its
+Claude Code / OpenCode integrations, and configures PowerShell 7, Windows PowerShell,
+WSL bash, and WSL zsh profiles to auto-launch `herdr` on startup — replacing any
+existing Zellij autostart block from a prior `/setup-zellij` run (idempotent
+— skips profiles that are already configured, and only installs herdr itself after
+confirming with the user since that step runs a remote install script).
 
 ---
 
@@ -201,7 +203,7 @@ End every run with:
    | 4 — Enable MCP | ✓ / ✗ | created / merged / unchanged |
    | 5 — /setup-all | ✓ / ⏭ | ran / pending plugin install |
    | 6-A — Install skills | ✓ / ✗ / ⏭ | installed / gh auth needed / plugin pending |
-   | 6-B — Zellij autostart | ✓ / ⏭ | configured / zellij not installed |
+   | 6-B — herdr autostart | ✓ / ⏭ | configured / herdr install declined |
    | 7 — Register projects | ✓ / ⏭ | edited / already configured |
    | 8 — Verify | ⏭ | manual — run /mcp |
 

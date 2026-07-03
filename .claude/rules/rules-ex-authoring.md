@@ -22,6 +22,9 @@ Follow this format when creating or editing a rule here:
 - **Matching is strict and root-anchored** — full match from the workspace root, no
   implicit leading `**/` prefix. Use `**` for any depth: `../repo/**/*.ts`. `*`
   matches a single path segment; `?` a single character.
+- **`*` also works as the repo-name segment itself**, for a rule that should apply
+  to *any* sibling repo rather than one specific one: `../*/.github/workflows/**`
+  matches `../srms/.github/workflows/ci.yml`, `../foo/.github/workflows/x.yml`, etc.
 - **Body = the injected rule.** Everything below the front matter is what gets
   injected into context (wrapped in `<extended-rules>`), once per rule per agent
   context per session. Keep it focused and imperative.
@@ -32,6 +35,17 @@ paths:
   - ../atman-marketplace/plugins/**/*.mjs
 ---
 In atman-marketplace .mjs hook scripts: zero dependencies, Node built-ins only.
+```
+
+Cross-repo example (applies to every sibling repo, not just one):
+
+```markdown
+---
+paths:
+  - ../*/.github/workflows/**
+---
+In any repo's GitHub Actions workflows: the `secrets` context cannot be used in
+`if:` conditions (job- or step-level) — route it through `env:` first.
 ```
 
 For the full design (de-dup, both injection paths, OpenCode mirror) see

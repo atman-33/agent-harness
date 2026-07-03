@@ -1,231 +1,127 @@
 #!/usr/bin/env node
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+// Synchronize user-scope Claude plugin commands and skills into the global
+// OpenCode directories (~/.config/opencode/{command,skills}).
+//
+// Uses the shared core for discovery, hashing, and manifest handling so the drift
+// reminder plugin and the check script agree with this script.
+//
+// Manifest behaviour: same as sync-claude-skills.mjs but split across two buckets
+// (userScope-skills and userScope-commands) within
+// <OPENCODE_GLOBAL_ROOT>/.claude-plugin-sync-manifest.json. Both are gitignored
+// (the user manifest lives outside the repo by default).
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
-const FORCE = process.argv.includes('--force');
+import {
+  fetchUserScopePluginListOutput,
+  discoverUserScopeSources,
+  copySourceToTarget,
+  hashArtifact,
+  loadManifest,
+  writeManifest,
+  manifestSet,
+  pruneManifestMissingTargets,
+  logSection,
+  nowIso,
+  defaultOpenCodeGlobalRoot,
+  defaultUserManifestPath,
+} from "./lib/claude-plugin-sync-core.mjs";
 
-const homeDir = os.homedir();
-const claudePluginsRoot = process.env.CLAUDE_PLUGINS_ROOT || path.join(
-  homeDir,
-  '.claude',
-  'plugins',
-  'marketplaces'
-);
-const openCodeRoot = process.env.OPENCODE_GLOBAL_ROOT || path.join(homeDir, '.config', 'opencode');
-const commandTargetRoot = path.join(openCodeRoot, 'command');
-const skillTargetRoot = path.join(openCodeRoot, 'skills');
+const FORCE = process.argv.includes("--force");
 
-function logSection(label, items) {
-  console.log(`\n## ${label}`);
-  if (items.length === 0) {
-    console.log('(none)');
-    return;
-  }
+const claudePluginsRoot = process.env.CLAUDE_PLUGINS_ROOT ||
+  path.join(os.homedir(), ".claude", "plugins", "marketplaces");
+const openCodeRoot = process.env.OPENCODE_GLOBAL_ROOT || defaultOpenCodeGlobalRoot();
+const manifestPath = defaultUserManifestPath(openCodeRoot);
 
-  for (const item of items) {
-    console.log(`- ${item}`);
-  }
-}
-
-function ensureDirectory(dirPath) {
-  fs.mkdirSync(dirPath, { recursive: true });
-}
-
-function parsePluginList(output) {
-  const lines = output.split(/\r?\n/);
-  const plugins = [];
-  const warnings = [];
-  let current = null;
-
-  for (const line of lines) {
-    const pluginMatch = line.match(/^\s*❯\s+([^@\s]+)@([^\s]+)\s*$/u);
-    if (pluginMatch) {
-      if (current) {
-        plugins.push(current);
-      }
-
-      current = {
-        pluginName: pluginMatch[1],
-        marketplace: pluginMatch[2],
-        version: null,
-        scope: null,
-        status: null,
-      };
-      continue;
-    }
-
-    if (!current) {
-      continue;
-    }
-
-    const versionMatch = line.match(/^\s*Version:\s+(.+)\s*$/);
-    if (versionMatch) {
-      current.version = versionMatch[1].trim();
-      continue;
-    }
-
-    const scopeMatch = line.match(/^\s*Scope:\s+(.+)\s*$/);
-    if (scopeMatch) {
-      current.scope = scopeMatch[1].trim();
-      continue;
-    }
-
-    const statusMatch = line.match(/^\s*Status:\s+(.+)\s*$/);
-    if (statusMatch) {
-      current.status = statusMatch[1].trim();
-    }
-  }
-
-  if (current) {
-    plugins.push(current);
-  }
-
-  for (const plugin of plugins) {
-    if (!plugin.scope) {
-      warnings.push(`Missing scope metadata for ${plugin.pluginName}@${plugin.marketplace}`);
-    }
-  }
-
-  if (plugins.length === 0) {
-    warnings.push('No plugin entries could be parsed from `claude plugin list`.');
-  }
-
-  return { plugins, warnings };
-}
-
-function copyCommandFiles(sourceRoot, pluginRef, copied, skipped, unavailable) {
-  if (!fs.existsSync(sourceRoot)) {
-    unavailable.push(`${pluginRef}/commands -> ${sourceRoot}`);
-    return;
-  }
-
-  const entries = fs.readdirSync(sourceRoot, { withFileTypes: true })
-    .filter((entry) => entry.isFile());
-
-  if (entries.length === 0) {
-    unavailable.push(`${pluginRef}/commands -> no files found`);
-    return;
-  }
-
-  for (const entry of entries) {
-    const sourcePath = path.join(sourceRoot, entry.name);
-    const targetPath = path.join(commandTargetRoot, entry.name);
-
-    if (fs.existsSync(targetPath) && !FORCE) {
-      skipped.push(`command:${entry.name} (${pluginRef})`);
-      continue;
-    }
-
-    fs.copyFileSync(sourcePath, targetPath);
-    copied.push(`command:${entry.name} (${pluginRef})`);
-  }
-}
-
-function copySkillDirs(sourceRoot, pluginRef, copied, skipped, unavailable) {
-  if (!fs.existsSync(sourceRoot)) {
-    unavailable.push(`${pluginRef}/skills -> ${sourceRoot}`);
-    return;
-  }
-
-  const entries = fs.readdirSync(sourceRoot, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory());
-
-  if (entries.length === 0) {
-    unavailable.push(`${pluginRef}/skills -> no directories found`);
-    return;
-  }
-
-  for (const entry of entries) {
-    const sourcePath = path.join(sourceRoot, entry.name);
-    const targetPath = path.join(skillTargetRoot, entry.name);
-
-    if (fs.existsSync(targetPath) && !FORCE) {
-      skipped.push(`skill:${entry.name} (${pluginRef})`);
-      continue;
-    }
-
-    if (fs.existsSync(targetPath) && FORCE) {
-      fs.rmSync(targetPath, { recursive: true, force: true });
-    }
-
-    fs.cpSync(sourcePath, targetPath, { recursive: true, force: true });
-    copied.push(`skill:${entry.name} (${pluginRef})`);
-  }
-}
-
-let pluginListOutput;
+let listOutput;
 try {
-  pluginListOutput = execFileSync('claude', ['plugin', 'list'], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-} catch (error) {
-  const stderr = error.stderr ? String(error.stderr).trim() : '';
-  const message = stderr || error.message;
-  console.error(`Error: Failed to run \`claude plugin list\`: ${message}`);
+  listOutput = await fetchUserScopePluginListOutput();
+  if (listOutput === null) {
+    console.error("Error: `claude plugin list` produced no output.");
+    process.exit(1);
+  }
+} catch (err) {
+  console.error(err instanceof Error ? err.message : String(err));
   process.exit(1);
 }
 
-const { plugins, warnings } = parsePluginList(pluginListOutput);
-const userScopePlugins = plugins.filter((plugin) => plugin.scope === 'user');
+const discovery = discoverUserScopeSources({
+  claudePluginsRoot,
+  openCodeGlobalRoot: openCodeRoot,
+  listOutput,
+});
 
-if (userScopePlugins.length === 0) {
-  logSection('Parse warnings', warnings);
-  console.log('\nNo user-scope Claude plugins found.');
+const userScopePlugins = discovery.skillsSources
+  .map((s) => s.pluginRef)
+  .concat(discovery.commandsSources.map((s) => s.pluginRef));
+const uniquePluginRefs = [...new Set(userScopePlugins)];
+
+if (uniquePluginRefs.length === 0 && discovery.warnings.length === 0) {
+  console.log("No user-scope Claude plugins found.");
   process.exit(0);
 }
 
-ensureDirectory(commandTargetRoot);
-ensureDirectory(skillTargetRoot);
+fs.mkdirSync(discovery.targets.skillsTarget, { recursive: true });
+fs.mkdirSync(discovery.targets.commandsTarget, { recursive: true });
 
+const manifest = loadManifest(manifestPath) || { version: 1, buckets: {} };
+if (!manifest.buckets) manifest.buckets = {};
+
+const timestamp = nowIso();
 const copied = [];
 const skipped = [];
-const missing = [];
-const unavailable = [];
+const seeded = [];
 
-for (const plugin of userScopePlugins) {
-  const pluginRef = `${plugin.pluginName}@${plugin.marketplace}`;
-  const pluginRoot = path.join(
-    claudePluginsRoot,
-    plugin.marketplace,
-    'plugins',
-    plugin.pluginName
-  );
+function processBucket(scopeKey, sources, targetDir) {
+  for (const source of sources) {
+    const targetPath = path.join(targetDir, source.name);
+    const existedBefore = fs.existsSync(targetPath);
 
-  if (!fs.existsSync(pluginRoot)) {
-    missing.push(`${pluginRef} -> ${pluginRoot}`);
-    continue;
+    if (existedBefore && !FORCE) {
+      skipped.push(`${source.kind}:${source.name} (${source.pluginRef})`);
+      const bucket = manifest.buckets[scopeKey] || (manifest.buckets[scopeKey] = {});
+      if (!bucket[`${source.kind}/${source.name}`]) {
+        const sourceHash = hashArtifact(source.sourcePath);
+        const targetHash = hashArtifact(targetPath);
+        manifestSet({ manifest, scopeKey, source, sourceHash, targetHash, copiedAt: timestamp });
+        seeded.push(`${source.kind}:${source.name} (${source.pluginRef})`);
+      }
+      continue;
+    }
+
+    const result = copySourceToTarget(source, targetDir, FORCE);
+    if (!result.copied) {
+      skipped.push(`${source.kind}:${source.name} (${source.pluginRef})`);
+      continue;
+    }
+    const sourceHash = hashArtifact(source.sourcePath);
+    const targetHash = hashArtifact(targetPath);
+    manifestSet({ manifest, scopeKey, source, sourceHash, targetHash, copiedAt: timestamp });
+    copied.push(`${source.kind}:${source.name} (${source.pluginRef})`);
   }
-
-  copyCommandFiles(
-    path.join(pluginRoot, 'commands'),
-    pluginRef,
-    copied,
-    skipped,
-    unavailable
-  );
-  copySkillDirs(
-    path.join(pluginRoot, 'skills'),
-    pluginRef,
-    copied,
-    skipped,
-    unavailable
-  );
 }
 
-logSection('User-scope plugins', userScopePlugins.map((plugin) => `${plugin.pluginName}@${plugin.marketplace}`));
-logSection('Resolved paths', [
+processBucket("userScope-skills", discovery.skillsSources, discovery.targets.skillsTarget);
+processBucket("userScope-commands", discovery.commandsSources, discovery.targets.commandsTarget);
+
+pruneManifestMissingTargets(manifest, "userScope-skills", discovery.targets.skillsTarget);
+pruneManifestMissingTargets(manifest, "userScope-commands", discovery.targets.commandsTarget);
+
+writeManifest(manifestPath, manifest);
+
+logSection("User-scope plugins", uniquePluginRefs);
+logSection("Resolved paths", [
   `CLAUDE_PLUGINS_ROOT=${claudePluginsRoot}`,
   `OPENCODE_GLOBAL_ROOT=${openCodeRoot}`,
+  `MANIFEST=${manifestPath}`,
 ]);
-logSection('Copied', copied);
-logSection('Skipped (already exists)', skipped);
-logSection('Missing plugin roots', missing);
-logSection('Unavailable artifact directories', unavailable);
-logSection('Parse warnings', warnings);
+logSection("Copied", copied);
+logSection("Skipped (already exists)", skipped);
+logSection("Manifest seeded (target pre-existed, no copy performed)", seeded);
+logSection("Parse warnings / missing plugin roots", discovery.warnings);
 
-if (missing.length > 0 || warnings.length > 0) {
+if (discovery.warnings.length > 0) {
   process.exitCode = 2;
 }

@@ -1,0 +1,143 @@
+{
+  "version": 1,
+  "buckets": {
+    "projectScope-skills": {
+      "skill/capture-rule": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "capture-rule",
+        "sourceHash": "5f922d02294344aa041b2f46c26fff1ca8e17890",
+        "targetHash": "5f922d02294344aa041b2f46c26fff1ca8e17890",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/commit-changes": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "commit-changes",
+        "sourceHash": "85eadf28c3bf7baa1f3e465676ab8aead2f2dc5b",
+        "targetHash": "4f45aca1126029f1f0b2623ee3854def8e7510be",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/create-adr": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "create-adr",
+        "sourceHash": "4f56631a59fa49d9a6a264ae75e3262851a4e4d8",
+        "targetHash": "4f56631a59fa49d9a6a264ae75e3262851a4e4d8",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/create-feature-branch": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "create-feature-branch",
+        "sourceHash": "a4df7673faf5d50b7853e2344633996c67627465",
+        "targetHash": "a4df7673faf5d50b7853e2344633996c67627465",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/create-manual-test-guide": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "create-manual-test-guide",
+        "sourceHash": "ca6b0d8d12bae4807f73378802bda318baf16a5a",
+        "targetHash": "ca6b0d8d12bae4807f73378802bda318baf16a5a",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/create-onboarding-guide": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "create-onboarding-guide",
+        "sourceHash": "3b87b3c9b62b76ddac3108f0bf8a6c9358a67516",
+        "targetHash": "3b87b3c9b62b76ddac3108f0bf8a6c9358a67516",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/create-pull-request": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "create-pull-request",
+        "sourceHash": "6bcfcae3ab6f1f4f3dda6658fc95cdb088b738d9",
+        "targetHash": "f5529ad33f9bf4c94464a50bbca1f4e0c670e415",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/create-review-guide": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "create-review-guide",
+        "sourceHash": "1c6639b476c8cc09509aff313975b24aca090ae6",
+        "targetHash": "1c6639b476c8cc09509aff313975b24aca090ae6",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/develop-small-feature": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "develop-small-feature",
+        "sourceHash": "a5e49c87bc705ff761b5c9a4c7d90b6ad2baf21e",
+        "targetHash": "a5e49c87bc705ff761b5c9a4c7d90b6ad2baf21e",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/install-recommended-skills": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "install-recommended-skills",
+        "sourceHash": "b62e140f2a39066af8fb05d8483cdbe23d67b8dd",
+        "targetHash": "b62e140f2a39066af8fb05d8483cdbe23d67b8dd",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/investigate-bug-report": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "investigate-bug-report",
+        "sourceHash": "4356c902bf44e9f9039af533e70aa86171d0fce0",
+        "targetHash": "4356c902bf44e9f9039af533e70aa86171d0fce0",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/prepare-release": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "prepare-release",
+        "sourceHash": "e2ef3ff0df775bae1d01027f24a1f6fc90595d6c",
+        "targetHash": "e2ef3ff0df775bae1d01027f24a1f6fc90595d6c",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/set-openspec-path": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "set-openspec-path",
+        "sourceHash": "4a289e4410ff721607cded0537e6c6f74fbc7a1b",
+        "targetHash": "4a289e4410ff721607cded0537e6c6f74fbc7a1b",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/setup-all": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "setup-all",
+        "sourceHash": "1bf25a3c96e4486b144ece6d3cbe5f258458528f",
+        "targetHash": "1bf25a3c96e4486b144ece6d3cbe5f258458528f",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/setup-openspec": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "setup-openspec",
+        "sourceHash": "765fdef4d89a1aff323dc24829238172bb604650",
+        "targetHash": "765fdef4d89a1aff323dc24829238172bb604650",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/setup-project-context": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "setup-project-context",
+        "sourceHash": "68a14b6dadd41d65eded4ad27d7f05adb3158775",
+        "targetHash": "68a14b6dadd41d65eded4ad27d7f05adb3158775",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      },
+      "skill/setup-rules-ex": {
+        "pluginRef": "engineering@atman-marketplace",
+        "kind": "skill",
+        "name": "setup-rules-ex",
+        "sourceHash": "7c9d18c00fc8fe279955abc3e12062625d67f4e4",
+        "targetHash": "7c9d18c00fc8fe279955abc3e12062625d67f4e4",
+        "copiedAt": "2026-07-11T03:13:19.294Z"
+      }
+    }
+  }
+}
